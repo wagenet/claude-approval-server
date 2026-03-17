@@ -16,6 +16,7 @@ interface StoppedSession {
   sessionId: string
   stoppedAt: number
   transcriptPath?: string
+  payload: Record<string, unknown>
 }
 
 const pending = new Map<string, PendingEntry>()
@@ -290,7 +291,7 @@ Bun.serve({
         const payload = (await req.json()) as Record<string, unknown>
         const sessionId = payload.session_id as string
         const transcriptPath = payload.transcript_path as string | undefined
-        stoppedSessions.set(sessionId, { sessionId, stoppedAt: Date.now(), transcriptPath })
+        stoppedSessions.set(sessionId, { sessionId, stoppedAt: Date.now(), transcriptPath, payload })
         console.log(`[stop] session=${sessionId}`)
         Bun.spawn(['alerter', '--title', 'Claude session finished',
           '--message', sessionId.slice(0, 8), '--timeout', '5'])
@@ -300,7 +301,11 @@ Bun.serve({
 
     '/stopped': {
       GET() {
-        return Response.json([...stoppedSessions.values()])
+        const items = [...stoppedSessions.values()].map(({ sessionId, stoppedAt, transcriptPath, payload }) => ({
+          sessionId, stoppedAt, transcriptPath,
+          terminal_info: payload.terminal_info,
+        }))
+        return Response.json(items)
       },
     },
 
@@ -310,6 +315,16 @@ Bun.serve({
         return deleted
           ? Response.json({ ok: true })
           : Response.json({ error: 'Not found' }, { status: 404 })
+      },
+    },
+
+    '/focus-stopped/:id': {
+      POST(req) {
+        const session = stoppedSessions.get(req.params.id)
+        if (!session) return Response.json({ error: 'Not found' }, { status: 404 })
+        const script = buildFocusScript(session.payload)
+        if (script) Bun.spawn(['osascript', '-e', script], { stdout: 'ignore', stderr: 'ignore' })
+        return Response.json({ ok: true })
       },
     },
 

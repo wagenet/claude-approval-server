@@ -6,6 +6,7 @@ interface StoppedSession {
   sessionId: string
   stoppedAt: number
   transcriptPath?: string
+  terminal_info?: TerminalInfo
 }
 
 interface TerminalInfo {
@@ -234,6 +235,8 @@ function makeStoppedCard(session: StoppedSession): HTMLElement {
 
   const sid = session.sessionId.slice(0, 8) + '…'
   const when = new Date(session.stoppedAt).toLocaleTimeString()
+  const ti = session.terminal_info
+  const hasFocusTarget = !!(ti?.iterm_session_id || ti?.ghostty_resources_dir || ti?.term_program)
 
   card.innerHTML = `
     <div class="card-header">
@@ -243,6 +246,7 @@ function makeStoppedCard(session: StoppedSession): HTMLElement {
     <div class="stopped-time">${when}</div>
     <div class="actions">
       <button class="btn-dismiss">Dismiss</button>
+      <button class="btn-focus"${hasFocusTarget ? '' : ' style="display:none"'}>Focus</button>
     </div>
   `
 
@@ -251,6 +255,10 @@ function makeStoppedCard(session: StoppedSession): HTMLElement {
     card.remove()
     renderedStopped.delete(session.sessionId)
     updateStoppedIdle()
+  })
+
+  card.querySelector<HTMLButtonElement>('.btn-focus')!.addEventListener('click', async () => {
+    await fetch(`/focus-stopped/${session.sessionId}`, { method: 'POST' })
   })
 
   return card
