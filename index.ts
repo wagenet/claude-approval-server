@@ -81,6 +81,91 @@ function denyResponse(reason = 'Denied by user') {
   }
 }
 
+interface TerminalInfo {
+  term_program?: string
+  iterm_session_id?: string
+  ghostty_resources_dir?: string
+}
+
+function buildFocusScript(payload: Record<string, unknown>): string | null {
+  const info = (payload.terminal_info ?? {}) as TerminalInfo
+  const cwd = (payload.cwd ?? '') as string
+  const termProgram = (info.term_program ?? '').toLowerCase()
+
+  if (info.iterm_session_id) {
+    const guid = info.iterm_session_id.split(':')[1]
+    if (!guid) return null
+    return `
+tell application "iTerm2"
+  repeat with w in windows
+    repeat with t in tabs of w
+      repeat with s in sessions of t
+        if unique ID of s is "${guid}" then
+          select t
+          tell s to select
+        end if
+      end repeat
+    end repeat
+  end repeat
+  activate
+end tell`
+  }
+
+  if (info.ghostty_resources_dir || termProgram === 'ghostty') {
+    if (!cwd) return 'tell application "Ghostty" to activate'
+    return `
+tell application "Ghostty"
+  repeat with w in windows
+    repeat with t in tabs of w
+      repeat with trm in terminals of t
+        if working directory of trm is "${cwd}" then
+          set index of w to 1
+          set selected of t to true
+          activate
+          return
+        end if
+      end repeat
+    end repeat
+  end repeat
+  activate
+end tell`
+  }
+
+  if (termProgram === 'vscode') {
+    const parts = cwd.split('/')
+    const workspace = parts[parts.length - 1] ?? ''
+    if (!workspace) {
+      return `
+tell application "System Events"
+  tell process "Code"
+    set frontmost to true
+  end tell
+end tell`
+    }
+    return `
+tell application "System Events"
+  tell process "Code"
+    set frontmost to true
+    delay 0.3
+    repeat with w in windows
+      if name of w contains "${workspace}" then
+        set index of w to 1
+        exit repeat
+      end if
+    end repeat
+  end tell
+end tell`
+  }
+
+  return null
+}
+
+function focusTerminal(entry: PendingEntry) {
+  const script = buildFocusScript(entry.payload)
+  if (!script) return
+  Bun.spawn(['osascript', '-e', script], { stdout: 'ignore', stderr: 'ignore' })
+}
+
 function stableStringify(val: unknown): string {
   if (val === null || typeof val !== 'object') return JSON.stringify(val)
   if (Array.isArray(val)) return '[' + val.map(stableStringify).join(',') + ']'
@@ -124,6 +209,15 @@ Bun.serve({
         pending.delete(id)
         Bun.spawn(['alerter', '--remove', id])
         entry.resolve(body.decision)
+        return Response.json({ ok: true })
+      },
+    },
+
+    '/focus/:id': {
+      POST(req) {
+        const entry = pending.get(req.params.id)
+        if (!entry) return Response.json({ error: 'Not found' }, { status: 404 })
+        focusTerminal(entry)
         return Response.json({ ok: true })
       },
     },

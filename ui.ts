@@ -8,6 +8,12 @@ interface StoppedSession {
   transcriptPath?: string
 }
 
+interface TerminalInfo {
+  term_program?: string
+  iterm_session_id?: string
+  ghostty_resources_dir?: string
+}
+
 interface QueueItem {
   id: string
   enqueuedAt: number
@@ -16,6 +22,7 @@ interface QueueItem {
   tool_input?: Record<string, unknown>
   session_id?: string
   cwd?: string
+  terminal_info?: TerminalInfo
 }
 
 const POLL_MS = 1000
@@ -128,6 +135,8 @@ function makeCard(item: QueueItem): HTMLElement {
 
   const cwdShort = shortCwd(item.cwd ?? '')
   const cwdFull = item.cwd ?? ''
+  const ti = item.terminal_info
+  const hasFocusTarget = !!(ti?.iterm_session_id || ti?.ghostty_resources_dir || ti?.term_program)
 
   card.innerHTML = `
     <div class="card-header">
@@ -142,6 +151,7 @@ function makeCard(item: QueueItem): HTMLElement {
       <button class="btn-allow">Allow</button>
       <button class="btn-deny">Deny</button>
       <button class="btn-explain">Explain</button>
+      <button class="btn-focus"${hasFocusTarget ? '' : ' style="display:none"'}>Focus</button>
     </div>
   `
 
@@ -202,6 +212,11 @@ function makeCard(item: QueueItem): HTMLElement {
     }
     explainBtn.textContent = 'Explain'
     explainBtn.disabled = false
+  })
+
+  const focusBtn = card.querySelector<HTMLButtonElement>('.btn-focus')!
+  focusBtn.addEventListener('click', async () => {
+    await fetch(`/focus/${item.id}`, { method: 'POST' })
   })
 
   const timerEl = card.querySelector<HTMLElement>('.timer')!
