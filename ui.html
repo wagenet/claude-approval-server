@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Claude Approval Queue</title>
+  <script type="module" src="./ui.ts"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -100,21 +101,37 @@
       color: #64748b;
     }
 
+    .cwd {
+      font-size: 0.72rem;
+      color: #475569;
+      font-family: monospace;
+    }
+
     pre {
-      background: #0f1117;
       border: 1px solid #2d3548;
       border-radius: 6px;
-      padding: 0.75rem 1rem;
+      padding: 0.75rem 1rem !important;
       font-size: 0.8rem;
       font-family: 'SF Mono', 'Fira Code', monospace;
       overflow-x: auto;
       white-space: pre-wrap;
       word-break: break-all;
-      color: #cbd5e1;
       margin-bottom: 1rem;
       max-height: 200px;
       overflow-y: auto;
     }
+
+    .file-path {
+      font-size: 0.72rem;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      color: #64748b;
+      margin-bottom: 0.25rem;
+    }
+
+    .diff-block { word-break: normal; }
+    .diff-added, .diff-removed, .diff-context { display: block; padding: 0 0.25rem; }
+    .diff-added   { background: rgba(22, 163, 74, 0.18); color: #86efac; }
+    .diff-removed { background: rgba(220, 38, 38, 0.18); color: #fca5a5; }
 
     .actions {
       display: flex;
@@ -149,6 +166,23 @@
       opacity: 0.4;
       cursor: not-allowed;
     }
+
+    .btn-explain {
+      background: transparent;
+      color: #64748b;
+      border: 1px solid #2d3548;
+    }
+    .btn-explain:hover { color: #94a3b8; border-color: #475569; }
+    .btn-explain:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .explanation {
+      font-size: 0.82rem;
+      color: #94a3b8;
+      line-height: 1.55;
+      border-left: 2px solid #334155;
+      padding: 0.4rem 0.75rem;
+      margin-bottom: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -156,134 +190,5 @@
   <div id="idle">No pending requests</div>
   <div id="queue" style="display:none"></div>
 
-  <script>
-    const POLL_MS = 1000
-    const AUTO_DENY_MS = 10 * 60 * 1000
-    const rendered = new Map() // id -> card element
-
-    function badgeClass(toolName) {
-      if (toolName === 'Bash')  return 'badge-bash'
-      if (toolName === 'Write') return 'badge-write'
-      if (toolName === 'Edit')  return 'badge-edit'
-      return 'badge-default'
-    }
-
-    function formatInput(item) {
-      const input = item.tool_input
-      if (!input) return JSON.stringify(item, null, 2)
-      if (item.tool_name === 'Bash') return input.command ?? ''
-      if (item.tool_name === 'Write' || item.tool_name === 'Edit') {
-        const path = input.file_path ?? input.path ?? ''
-        const content = input.content ?? input.new_string ?? ''
-        return path ? `${path}\n\n${content}` : content
-      }
-      return JSON.stringify(input, null, 2)
-    }
-
-    function makeCard(item) {
-      const card = document.createElement('div')
-      card.className = 'card'
-      card.dataset.id = item.id
-
-      const sessionId = item.session_id
-        ? String(item.session_id).slice(0, 8) + '…'
-        : '—'
-
-      const elapsed = () => {
-        const s = Math.floor((Date.now() - item.enqueuedAt) / 1000)
-        const remaining = Math.max(0, Math.floor((AUTO_DENY_MS - (Date.now() - item.enqueuedAt)) / 1000))
-        const m = Math.floor(remaining / 60)
-        const sec = String(remaining % 60).padStart(2, '0')
-        return `${m}:${sec} remaining`
-      }
-
-      card.innerHTML = `
-        <div class="card-header">
-          <span class="badge ${badgeClass(item.tool_name)}">${item.tool_name ?? 'unknown'}</span>
-          <span class="timer" data-enqueued="${item.enqueuedAt}">${elapsed()}</span>
-          <span class="session">${sessionId}</span>
-        </div>
-        <pre>${escHtml(formatInput(item))}</pre>
-        <div class="actions">
-          <button class="btn-allow">Allow</button>
-          <button class="btn-deny">Deny</button>
-        </div>
-      `
-
-      const [allowBtn, denyBtn] = card.querySelectorAll('button')
-
-      async function decide(decision) {
-        allowBtn.disabled = true
-        denyBtn.disabled = true
-        await fetch(`/decide/${item.id}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ decision }),
-        })
-        card.remove()
-        rendered.delete(item.id)
-        updateIdle()
-      }
-
-      allowBtn.addEventListener('click', () => decide('allow'))
-      denyBtn.addEventListener('click', () => decide('deny'))
-
-      // update timer every second
-      const timerEl = card.querySelector('.timer')
-      const interval = setInterval(() => {
-        if (!card.isConnected) { clearInterval(interval); return }
-        timerEl.textContent = elapsed()
-      }, 1000)
-
-      return card
-    }
-
-    function escHtml(str) {
-      return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-    }
-
-    function updateIdle() {
-      const q = document.getElementById('queue')
-      const idle = document.getElementById('idle')
-      const hasCards = q.children.length > 0
-      idle.style.display = hasCards ? 'none' : ''
-      q.style.display = hasCards ? 'flex' : 'none'
-    }
-
-    async function poll() {
-      try {
-        const items = await fetch('/queue').then(r => r.json())
-        const q = document.getElementById('queue')
-        const currentIds = new Set(items.map(i => i.id))
-
-        // remove stale cards
-        for (const [id, card] of rendered) {
-          if (!currentIds.has(id)) {
-            card.remove()
-            rendered.delete(id)
-          }
-        }
-
-        // add new cards
-        for (const item of items) {
-          if (!rendered.has(item.id)) {
-            const card = makeCard(item)
-            q.append(card)
-            rendered.set(item.id, card)
-          }
-        }
-
-        updateIdle()
-      } catch (e) {
-        // server unreachable, ignore
-      }
-    }
-
-    poll()
-    setInterval(poll, POLL_MS)
-  </script>
 </body>
 </html>

@@ -8,46 +8,16 @@ interface PendingEntry {
   resolve: (decision: string) => void
   payload: Record<string, unknown>
   enqueuedAt: number
-  alerterProc?: ReturnType<typeof Bun.spawn>
+  explanation?: string
+  explaining?: boolean
 }
 
 const pending = new Map<string, PendingEntry>()
 
-async function loadAllowedTools(): Promise<string[]> {
-  try {
-    const file = Bun.file(`${process.env.HOME}/.claude/settings.json`)
-    const settings = await file.json()
-    return settings.allowedTools ?? []
-  } catch {
-    return []
-  }
-}
-
-async function shouldAutoAllow(payload: Record<string, unknown>): Promise<boolean> {
-  const toolName = payload.tool_name as string | undefined
-  const toolInput = payload.tool_input as Record<string, unknown> | undefined
-  if (!toolName) return false
-
-  const allowedTools = await loadAllowedTools()
-  for (const entry of allowedTools) {
-    const match = entry.match(/^([^(]+)(?:\((.+)\))?$/)
-    if (!match) continue
-    const [, entryTool, entryPattern] = match
-    if (entryTool !== toolName) continue
-    if (!entryPattern) return true
-    if (toolName === 'Bash') {
-      const cmd = (toolInput?.command as string) ?? ''
-      const prefix = entryPattern.replace(/:?\*$/, '')
-      if (cmd.startsWith(prefix)) return true
-    }
-  }
-
-  if (['Read', 'Glob', 'Grep', 'LS'].includes(toolName)) return true
-  if (toolName === 'Bash') {
-    const cmd = (toolInput?.command as string) ?? ''
-    return /^(git (status|log|diff|show)|ls |echo |cat )/.test(cmd)
-  }
-  return false
+function logRemoval(id: string, reason: string, entry: PendingEntry) {
+  const tool = entry.payload.tool_name as string ?? 'unknown'
+  const input = JSON.stringify(entry.payload.tool_input ?? '').slice(0, 120)
+  console.log(`[remove] ${reason} | ${tool} | ${input} | id=${id}`)
 }
 
 async function showNotification(id: string, toolName: string, summary: string) {
@@ -59,19 +29,38 @@ async function showNotification(id: string, toolName: string, summary: string) {
     '--timeout', '0',
     '--group', id,
   ])
-  const entry = pending.get(id)
-  if (entry) entry.alerterProc = proc
   const text = await new Response(proc.stdout).text()
-  const decision = text.trim() === 'Allow' ? 'allow' : 'deny'
-  const entry2 = pending.get(id)
-  if (entry2) { pending.delete(id); entry2.resolve(decision) }
+  const trimmed = text.trim()
+  if (trimmed !== 'Allow' && trimmed !== 'Deny') return
+  const decision = trimmed === 'Allow' ? 'allow' : 'deny'
+  const entry = pending.get(id)
+  if (entry) { logRemoval(id, `alerter:${decision}`, entry); pending.delete(id); entry.resolve(decision) }
+}
+
+function buildExplainPrompt(payload: Record<string, unknown>): string {
+  const toolName = payload.tool_name as string
+  const input = (payload.tool_input ?? {}) as Record<string, unknown>
+
+  if (toolName === 'Bash') {
+    return `Briefly explain what this shell command does (2-3 sentences):\n\n\`\`\`bash\n${input.command}\n\`\`\``
+  }
+  if (toolName === 'Edit') {
+    const path = input.file_path ?? input.path ?? 'unknown'
+    return `Briefly explain what this code edit to ${path} does (2-3 sentences):\n\nRemoving:\n\`\`\`\n${input.old_string}\n\`\`\`\n\nAdding:\n\`\`\`\n${input.new_string}\n\`\`\``
+  }
+  if (toolName === 'Write') {
+    const path = input.file_path ?? input.path ?? 'unknown'
+    const content = String(input.content ?? '').slice(0, 3000)
+    return `Briefly explain what writing this content to ${path} does (2-3 sentences):\n\n\`\`\`\n${content}\n\`\`\``
+  }
+  return `Briefly explain what this ${toolName} tool call does (2-3 sentences):\n\n${JSON.stringify(input, null, 2)}`
 }
 
 function allowResponse() {
   return {
     hookSpecificOutput: {
-      hookEventName: 'PreToolUse',
-      permissionDecision: 'allow',
+      hookEventName: 'PermissionRequest',
+      decision: { behavior: 'allow' },
     },
   }
 }
@@ -79,23 +68,37 @@ function allowResponse() {
 function denyResponse(reason = 'Denied by user') {
   return {
     hookSpecificOutput: {
-      hookEventName: 'PreToolUse',
-      permissionDecision: 'deny',
-      permissionDecisionReason: reason,
+      hookEventName: 'PermissionRequest',
+      decision: { behavior: 'deny', message: reason },
     },
   }
 }
 
+function stableStringify(val: unknown): string {
+  if (val === null || typeof val !== 'object') return JSON.stringify(val)
+  if (Array.isArray(val)) return '[' + val.map(stableStringify).join(',') + ']'
+  const obj = val as Record<string, unknown>
+  return '{' + Object.keys(obj).sort().map(k => JSON.stringify(k) + ':' + stableStringify(obj[k])).join(',') + '}'
+}
+
 Bun.serve({
   port: PORT,
+  idleTimeout: 0,
   routes: {
     '/': index,
 
+    '/config': {
+      GET() {
+        return Response.json({ autoDenyMs: AUTO_DENY_TIMEOUT_MS })
+      },
+    },
+
     '/queue': {
       GET() {
-        const items = [...pending.entries()].map(([id, { payload, enqueuedAt }]) => ({
+        const items = [...pending.entries()].map(([id, { payload, enqueuedAt, explanation }]) => ({
           id,
           enqueuedAt,
+          explanation,
           ...payload,
         }))
         return Response.json(items)
@@ -110,10 +113,68 @@ Bun.serve({
           return Response.json({ error: 'Not found or already decided' }, { status: 404 })
         }
         const body = (await req.json()) as { decision: string }
+        logRemoval(id, `web-ui:${body.decision}`, entry)
         pending.delete(id)
         Bun.spawn(['alerter', '--remove', id])
         entry.resolve(body.decision)
         return Response.json({ ok: true })
+      },
+    },
+
+    '/post-tool-use': {
+      async POST(req) {
+        const payload = (await req.json()) as Record<string, unknown>
+        const sessionId = payload.session_id as string
+        const toolName = payload.tool_name as string
+
+        const toolInput = stableStringify(payload.tool_input)
+        for (const [id, entry] of pending) {
+          if (
+            entry.payload.session_id === sessionId &&
+            entry.payload.tool_name === toolName &&
+            stableStringify(entry.payload.tool_input) === toolInput
+          ) {
+            logRemoval(id, 'post-tool-use', entry)
+            pending.delete(id)
+            Bun.spawn(['alerter', '--remove', id])
+            entry.resolve('allow')
+            break
+          }
+        }
+
+        return Response.json({ ok: true })
+      },
+    },
+
+    '/explain/:id': {
+      async GET(req) {
+        const entry = pending.get(req.params.id)
+        if (!entry) return Response.json({ error: 'Not found' }, { status: 404 })
+        if (entry.explaining) return Response.json({ error: 'Already in progress' }, { status: 409 })
+        if (entry.explanation) return Response.json({ explanation: entry.explanation })
+
+        entry.explaining = true
+        try {
+          const prompt = buildExplainPrompt(entry.payload)
+          const proc = Bun.spawn(['claude', '-p', prompt, '--model', 'haiku'], { stdout: 'pipe', stderr: 'pipe' })
+          const timeout = setTimeout(() => proc.kill(), 30_000)
+          const [text, err] = await Promise.all([
+            new Response(proc.stdout).text(),
+            new Response(proc.stderr).text(),
+          ])
+          clearTimeout(timeout)
+          if (!text.trim() && err.trim()) {
+            console.error('[explain]', err.trim())
+            return Response.json({ error: err.trim() }, { status: 500 })
+          }
+          entry.explanation = text.trim()
+          return Response.json({ explanation: entry.explanation })
+        } catch (e) {
+          console.error('[explain]', e)
+          return Response.json({ error: String(e) }, { status: 500 })
+        } finally {
+          entry.explaining = false
+        }
       },
     },
 
@@ -127,27 +188,55 @@ Bun.serve({
       async POST(req) {
         const payload = (await req.json()) as Record<string, unknown>
 
-        if (await shouldAutoAllow(payload)) {
-          return Response.json(allowResponse())
-        }
-
         const id = randomUUID()
-        const decision = await new Promise<string>((resolve) => {
-          pending.set(id, { resolve, payload, enqueuedAt: Date.now() })
-          const toolName = (payload.tool_name as string) ?? 'unknown'
-          const summary = JSON.stringify(payload.tool_input ?? '')
-          showNotification(id, toolName, summary)
-
-          setTimeout(() => {
-            if (pending.has(id)) {
-              pending.delete(id)
-              resolve('deny')
-            }
-          }, AUTO_DENY_TIMEOUT_MS)
+        let resolveDecision!: (decision: string) => void
+        const decisionPromise = new Promise<string>((resolve) => {
+          resolveDecision = resolve
         })
 
-        pending.delete(id)
-        return Response.json(decision === 'allow' ? allowResponse() : denyResponse())
+        pending.set(id, { resolve: resolveDecision, payload, enqueuedAt: Date.now() })
+        const toolName = (payload.tool_name as string) ?? 'unknown'
+        const summary = JSON.stringify(payload.tool_input ?? '')
+        console.log(`[enqueue] ${toolName} | ${summary.slice(0, 120)} | id=${id}`)
+        showNotification(id, toolName, summary)
+
+        setTimeout(() => {
+          const entry = pending.get(id)
+          if (entry) {
+            logRemoval(id, 'auto-deny-timeout', entry)
+            pending.delete(id)
+            resolveDecision('deny')
+          }
+        }, AUTO_DENY_TIMEOUT_MS)
+
+        const encoder = new TextEncoder()
+        let clientGone = false
+
+        const stream = new ReadableStream({
+          start(controller) {
+            decisionPromise.then((decision) => {
+              if (clientGone) return
+              try {
+                controller.enqueue(encoder.encode(JSON.stringify(
+                  decision === 'allow' ? allowResponse() : denyResponse()
+                )))
+                controller.close()
+              } catch {}
+            })
+          },
+          cancel() {
+            clientGone = true
+            const entry = pending.get(id)
+            if (entry) {
+              logRemoval(id, 'stream-cancel', entry)
+              pending.delete(id)
+              Bun.spawn(['alerter', '--remove', id])
+              resolveDecision('deny')
+            }
+          },
+        })
+
+        return new Response(stream, { headers: { 'Content-Type': 'application/json' } })
       },
     },
   },

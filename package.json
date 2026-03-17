@@ -8,5 +8,9 @@
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "diff": "^8.0.3",
+    "highlight.js": "^11.11.1"
   }
 }

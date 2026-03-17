@@ -22,7 +22,7 @@
     <key>HOME</key>
     <string>/Users/pwagenet</string>
     <key>PATH</key>
-    <string>/Users/pwagenet/.bun/bin:/usr/local/bin:/usr/bin:/bin</string>
+    <string>/Users/pwagenet/.local/bin:/Users/pwagenet/.bun/bin:/usr/local/bin:/usr/bin:/bin</string>
   </dict>
 </dict>
 </plist>

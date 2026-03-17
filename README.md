@@ -32,14 +32,18 @@ Already added to `~/.claude/settings.json`:
 
 ```json
 "hooks": {
-  "PreToolUse": [{
-    "matcher": "*",
+  "PermissionRequest": [{
     "hooks": [{ "type": "http", "url": "http://localhost:4759/pending", "timeout": 600 }]
+  }],
+  "PostToolUse": [{
+    "hooks": [{ "type": "http", "url": "http://localhost:4759/post-tool-use", "timeout": 5 }]
   }]
 }
 ```
 
-`timeout: 600` — Claude waits up to 10 minutes. If the server is unreachable, Claude falls back to its normal approval prompt.
+`PermissionRequest` — Claude waits up to 10 minutes for approval. If the server is unreachable, Claude falls back to its normal approval prompt.
+
+`PostToolUse` — fires after each tool runs. If the CLI approved a request inline (bypassing the web UI), this clears the stuck pending item automatically.
 
 ## Install as a persistent background service (launchd)
 
