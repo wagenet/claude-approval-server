@@ -246,6 +246,12 @@ function makeCodeBlock(item: QueueItem): { pre: HTMLElement; filePath: string } 
   } else if (item.tool_name === "WebSearch") {
     code.className = "language-plaintext";
     code.textContent = asString(item.tool_input?.query);
+  } else if (item.tool_name === "ExitPlanMode") {
+    const prompts = item.tool_input?.allowedPrompts;
+    code.className = "language-plaintext";
+    code.textContent = Array.isArray(prompts)
+      ? prompts.map((p: unknown) => asString(p)).join("\n")
+      : "";
   } else {
     const display = item.tool_input ? parseEmbeddedJson(item.tool_input) : {};
     code.className = "language-json";
