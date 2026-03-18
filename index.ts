@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto'
+import { existsSync } from 'fs'
 import index from './ui.html'
 
 const PORT = 4759
@@ -88,6 +89,15 @@ interface TerminalInfo {
   ghostty_resources_dir?: string
 }
 
+function findGitRoot(dir: string): string {
+  let current = dir
+  while (current && current !== '/') {
+    if (existsSync(`${current}/.git`)) return current
+    current = current.substring(0, current.lastIndexOf('/'))
+  }
+  return dir
+}
+
 function buildFocusScript(payload: Record<string, unknown>): string | null {
   const info = (payload.terminal_info ?? {}) as TerminalInfo
   const cwd = (payload.cwd ?? '') as string
@@ -133,29 +143,10 @@ end tell`
   }
 
   if (termProgram === 'vscode') {
-    const parts = cwd.split('/')
-    const workspace = parts[parts.length - 1] ?? ''
-    if (!workspace) {
-      return `
-tell application "System Events"
-  tell process "Code"
-    set frontmost to true
-  end tell
-end tell`
-    }
-    return `
-tell application "System Events"
-  tell process "Code"
-    set frontmost to true
-    delay 0.3
-    repeat with w in windows
-      if name of w contains "${workspace}" then
-        set index of w to 1
-        exit repeat
-      end if
-    end repeat
-  end tell
-end tell`
+    if (!cwd) return 'tell application "Code" to activate'
+    const root = findGitRoot(cwd)
+    const escaped = root.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+    return `do shell script "open -a 'Visual Studio Code' \\"${escaped}\\""`
   }
 
   return null

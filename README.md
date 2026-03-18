@@ -25,7 +25,7 @@ The hook shim (`hook-shim.sh`) captures terminal environment variables (`TERM_PR
 
 - **iTerm2** — focuses the exact session (tab + split) using the session's unique ID
 - **Ghostty** (1.3+) — matches by working directory to find the right window/tab
-- **VSCode** — activates the Code process and matches window by workspace folder name
+- **VSCode** — uses `open -a` with the git root directory, which switches to the correct Space and window
 
 **Session tracking:**
 
