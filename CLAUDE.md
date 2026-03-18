@@ -8,20 +8,24 @@ alwaysApply: true
 This is a Claude Code approval server. It intercepts Claude's `PermissionRequest` hook, holds the connection open (up to 10 min), and lets the user approve/deny via a web UI at `http://localhost:4759`. Browser notifications alert the user to new items; clicking a notification focuses the tab.
 
 **Files:**
+
 - `index.ts` — Bun HTTP server (all state is in-memory; no database)
 - `ui.ts` — Frontend code bundled via `ui.html`
 - `hook-shim.sh` — Bash shim invoked by Claude Code hooks; enriches payload with terminal env vars and forwards to the server via `curl`
 
 **External runtime dependencies** (not in package.json):
+
 - `jq`, `curl` — used in `hook-shim.sh`
 - `osascript` — used for terminal focus (AppleScript)
 - `claude` CLI — `/explain/:id` spawns `claude -p ... --model haiku` as a subprocess
 
 **Running:**
+
 - Dev: `bun --hot index.ts`
 - Production: launchd via `com.pwagenet.claude-approval.plist`; logs go to `/tmp/claude-approval.log`
 
 **Key invariants:**
+
 - `AUTO_DENY_TIMEOUT_MS` (10 min) must match the `timeout: 600` in Claude's hook config
 - The `PostToolUse` hook fires after the user approves from the CLI, allowing stale pending items to self-clear via `/post-tool-use`
 - `AskUserQuestion` cards auto-clear when the next tool call from the same session arrives
@@ -29,6 +33,7 @@ This is a Claude Code approval server. It intercepts Claude's `PermissionRequest
 ## Documentation
 
 Keep `README.md` up to date whenever you make changes that affect:
+
 - How the server works or what it does
 - Setup / installation steps
 - Hook configuration
@@ -56,6 +61,27 @@ Default to using Bun instead of Node.js.
 - `WebSocket` is built-in. Don't use `ws`.
 - Prefer `Bun.file` over `node:fs`'s readFile/writeFile
 - Bun.$`ls` instead of execa.
+
+## TypeScript
+
+Prefer type guards over `as` casts when narrowing `unknown` values. Use `typeof` checks or a helper like:
+
+```ts
+function asString(val: unknown, fallback = ""): string {
+  return typeof val === "string" ? val : fallback;
+}
+```
+
+`as` casts are a last resort for cases where a type guard is not feasible. Any `as` cast must be preceded by a `// SAFETY:` comment explaining why it is sound.
+
+## Linting and formatting
+
+- `bun run lint` — oxlint with type-aware rules
+- `bun run lint:fix` — auto-fix where possible
+- `bun run format` — oxfmt
+- `bun run format:check` — check only (used in CI)
+
+Run `bun run lint` and `bun run format:check` before committing. CI enforces both.
 
 ## Testing
 
