@@ -214,7 +214,21 @@
 
     .dot-stopped { background: #64748b; animation: none; }
     .badge-stopped { background: #1e293b; color: #64748b; border: 1px solid #334155; }
-    .stopped-time { font-size: 0.75rem; color: #475569; margin-bottom: 0.75rem; font-family: monospace; }
+    .stopped-time { font-size: 0.75rem; color: #475569; margin-bottom: 0.5rem; font-family: monospace; }
+
+    .stopped-output {
+      display: none;
+      font-size: 0.8rem;
+      color: #94a3b8;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 200px;
+      overflow-y: auto;
+      border-left: 2px solid #334155;
+      padding: 0.4rem 0.75rem;
+      margin-bottom: 0.75rem;
+    }
     .btn-dismiss { background: transparent; color: #64748b; border: 1px solid #2d3548; }
     .btn-dismiss:hover { color: #94a3b8; border-color: #475569; }
 

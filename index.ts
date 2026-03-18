@@ -318,6 +318,36 @@ Bun.serve({
       },
     },
 
+    '/stopped/:id/output': {
+      async GET(req) {
+        const session = stoppedSessions.get(req.params.id)
+        if (!session) return Response.json({ error: 'Not found' }, { status: 404 })
+        if (!session.transcriptPath) return Response.json({ error: 'No transcript' }, { status: 404 })
+        try {
+          const text = await Bun.file(session.transcriptPath).text()
+          const lines = text.trim().split('\n').filter(Boolean)
+          let lastText: string | null = null
+          for (const line of lines) {
+            try {
+              const entry = JSON.parse(line)
+              const msg = entry.message
+              if (msg?.role === 'assistant' && Array.isArray(msg.content)) {
+                const texts = msg.content
+                  .filter((b: { type: string }) => b.type === 'text')
+                  .map((b: { text: string }) => b.text)
+                  .join('')
+                if (texts) lastText = texts
+              }
+            } catch { /* skip malformed lines */ }
+          }
+          if (!lastText) return Response.json({ error: 'No output found' }, { status: 404 })
+          return Response.json({ output: lastText })
+        } catch (e) {
+          return Response.json({ error: String(e) }, { status: 500 })
+        }
+      },
+    },
+
     '/focus-stopped/:id': {
       POST(req) {
         const session = stoppedSessions.get(req.params.id)

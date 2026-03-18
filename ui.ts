@@ -337,11 +337,23 @@ function makeStoppedCard(session: StoppedSession): HTMLElement {
       <span class="session">${sid}</span>
     </div>
     <div class="stopped-time">${when}</div>
+    <div class="stopped-output"></div>
     <div class="actions">
       <button class="btn-dismiss">Dismiss</button>
       <button class="btn-focus"${hasFocusTarget ? '' : ' style="display:none"'}>Focus</button>
     </div>
   `
+
+  const outputEl = card.querySelector<HTMLElement>('.stopped-output')!
+  fetch(`/stopped/${session.sessionId}/output`)
+    .then(r => r.json())
+    .then((body: { output?: string; error?: string }) => {
+      if (body.output) {
+        outputEl.textContent = body.output
+        outputEl.style.display = ''
+      }
+    })
+    .catch(() => {})
 
   card.querySelector('.btn-dismiss')!.addEventListener('click', async () => {
     await fetch(`/stopped/${session.sessionId}`, { method: 'DELETE' })
