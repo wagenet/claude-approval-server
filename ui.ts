@@ -14,6 +14,7 @@ import {
   splitCommand,
   parseHeredoc,
   parseInterpreterCall,
+  parseGitCommit,
 } from "./ui-utils";
 
 const POLL_MS = 1000;
@@ -200,6 +201,56 @@ function makeTwoPartBlock(
   return { pre: wrapper, filePath: "" };
 }
 
+function makeGitCommitBlock(cmd: string): HTMLElement | null {
+  const info = parseGitCommit(cmd);
+  if (!info) return null;
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "git-commit-block";
+
+  const pre = document.createElement("pre");
+  const code = document.createElement("code");
+  code.className = "language-bash";
+  code.textContent = info.preamble;
+  pre.appendChild(code);
+  hljs.highlightElement(code);
+  wrapper.appendChild(pre);
+
+  const msg = document.createElement("div");
+  msg.className = "commit-message";
+
+  const subjectEl = document.createElement("div");
+  subjectEl.className = "commit-subject";
+  const ccMatch = info.subject.match(/^(\w+)(\([^)]+\))?(!)?: /);
+  if (ccMatch) {
+    const typeSpan = document.createElement("span");
+    typeSpan.className = `commit-type commit-type-${ccMatch[1]}`;
+    typeSpan.textContent = ccMatch[0];
+    subjectEl.appendChild(typeSpan);
+    subjectEl.appendChild(document.createTextNode(info.subject.slice(ccMatch[0].length)));
+  } else {
+    subjectEl.textContent = info.subject;
+  }
+  msg.appendChild(subjectEl);
+
+  if (info.body) {
+    const bodyEl = document.createElement("div");
+    bodyEl.className = "commit-body";
+    bodyEl.textContent = info.body;
+    msg.appendChild(bodyEl);
+  }
+
+  for (const trailer of info.trailers) {
+    const trailerEl = document.createElement("div");
+    trailerEl.className = "commit-trailer";
+    trailerEl.textContent = trailer;
+    msg.appendChild(trailerEl);
+  }
+
+  wrapper.appendChild(msg);
+  return wrapper;
+}
+
 function makeCodeBlock(item: QueueItem): { pre: HTMLElement; filePath: string } {
   if (item.tool_name === "Edit") return makeDiffBlock(item);
 
@@ -209,6 +260,10 @@ function makeCodeBlock(item: QueueItem): { pre: HTMLElement; filePath: string } 
 
   if (item.tool_name === "Bash") {
     const rawCmd = asString(item.tool_input?.command);
+
+    const gitCommitEl = makeGitCommitBlock(rawCmd);
+    if (gitCommitEl) return { pre: gitCommitEl, filePath: "" };
+
     const heredoc = parseHeredoc(rawCmd);
     const interp = !heredoc ? parseInterpreterCall(rawCmd) : null;
     const split = !heredoc && !interp ? splitCommand(rawCmd) : null;

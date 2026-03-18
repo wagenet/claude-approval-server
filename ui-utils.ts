@@ -193,6 +193,46 @@ export function parseInterpreterCall(cmd: string): EmbeddedCode | null {
   return { header, body, lang: langFromInterpreter(interpreterName) };
 }
 
+export interface GitCommitInfo {
+  preamble: string; // shell commands with git commit -m "…"
+  subject: string; // first line of commit message
+  body: string; // body text (may be empty)
+  trailers: string[]; // trailer lines like "Co-Authored-By: ..."
+}
+
+/**
+ * Detect a `git commit -m "$(cat <<'EOF'…EOF\n)"` pattern.
+ * Returns parsed commit info or null if not matched.
+ */
+export function parseGitCommit(cmd: string): GitCommitInfo | null {
+  const match = cmd.match(
+    /^([\s\S]*?<<\s*['"]?(\w+)['"]?)\s*\n([\s\S]*?)\n\2[ \t]*\n\)["']?\s*$/,
+  );
+  if (!match) return null;
+
+  const rawPreamble = match[1].trim();
+  if (!/\bgit\s+commit\b/.test(rawPreamble)) return null;
+
+  // Simplify preamble: replace everything after "git commit" on the last line
+  const preamble = rawPreamble.replace(/(\bgit\s+commit\b).*$/, '$1 -m "…"');
+
+  const lines = match[3].split("\n");
+  const subject = lines[0] ?? "";
+
+  const trailerRe = /^[A-Za-z][A-Za-z0-9-]*: .+/;
+  const trailers: string[] = [];
+  let i = lines.length - 1;
+  while (i > 0 && lines[i].trim() === "") i--;
+  while (i > 0 && trailerRe.test(lines[i])) {
+    trailers.unshift(lines[i]);
+    i--;
+  }
+  if (i > 0 && lines[i].trim() === "") i--;
+
+  const body = lines.slice(1, i + 1).join("\n").trim();
+  return { preamble, subject, body, trailers };
+}
+
 import type { TerminalInfo } from "./ui-types";
 
 export function getTerminalIcon(ti: TerminalInfo | undefined): string {

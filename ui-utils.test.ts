@@ -10,6 +10,7 @@ import {
   parseHeredoc,
   parseInterpreterCall,
   langFromInterpreter,
+  parseGitCommit,
 } from "./ui-utils";
 
 describe("parseMcpToolName", () => {
@@ -244,6 +245,42 @@ describe("parseInterpreterCall", () => {
   });
   test("script file without -c returns null", () => {
     expect(parseInterpreterCall("python3 script.py")).toBeNull();
+  });
+});
+
+describe("parseGitCommit", () => {
+  const TYPICAL = `git add ui.html ui.ts \\\n  && git commit -m "$(cat <<'EOF'\nfix(ui): make filename prominent\n\nSplit the path into dir and base.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\nEOF\n)"`;
+
+  test("parses subject, body, and trailer", () => {
+    const result = parseGitCommit(TYPICAL);
+    expect(result).not.toBeNull();
+    expect(result!.subject).toBe("fix(ui): make filename prominent");
+    expect(result!.body).toBe("Split the path into dir and base.");
+    expect(result!.trailers).toEqual([
+      "Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>",
+    ]);
+  });
+
+  test("simplifies preamble", () => {
+    const result = parseGitCommit(TYPICAL);
+    expect(result!.preamble).toBe('git add ui.html ui.ts \\\n  && git commit -m "…"');
+  });
+
+  test("subject only (no body, no trailers)", () => {
+    const cmd = `git commit -m "$(cat <<'EOF'\nchore: bump version\nEOF\n)"`;
+    const result = parseGitCommit(cmd);
+    expect(result).not.toBeNull();
+    expect(result!.subject).toBe("chore: bump version");
+    expect(result!.body).toBe("");
+    expect(result!.trailers).toEqual([]);
+  });
+
+  test("regular heredoc (no git commit) returns null", () => {
+    expect(parseGitCommit("cat > file.txt <<'EOF'\nhello\nEOF\n")).toBeNull();
+  });
+
+  test("plain bash command returns null", () => {
+    expect(parseGitCommit("ls -la")).toBeNull();
   });
 });
 

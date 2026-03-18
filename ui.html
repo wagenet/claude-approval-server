@@ -408,6 +408,43 @@
         margin-bottom: 0;
       }
 
+      .git-commit-block pre {
+        margin-bottom: 0.5rem;
+      }
+      .commit-message {
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        font-family: "SF Mono", "Fira Code", monospace;
+        font-size: 0.82rem;
+      }
+      .commit-subject {
+        font-weight: 600;
+        font-size: 0.88rem;
+        color: var(--text);
+        word-break: break-word;
+      }
+      .commit-type { color: #7dd3fc; }
+      .commit-type-feat { color: #86efac; }
+      .commit-type-fix { color: #fca5a5; }
+      .commit-type-chore { color: var(--text-muted); }
+      .commit-type-docs { color: #c4b5fd; }
+      .commit-type-refactor { color: #fbbf24; }
+      .commit-type-test { color: #34d399; }
+      .commit-type-perf { color: #f97316; }
+      .commit-body {
+        color: var(--text-muted);
+        margin-top: 0.6rem;
+        white-space: pre-wrap;
+        line-height: 1.5;
+        word-break: break-word;
+      }
+      .commit-trailer {
+        color: var(--text-dim);
+        font-size: 0.78rem;
+        margin-top: 0.5rem;
+      }
+
       .diff-block {
         word-break: normal;
       }
