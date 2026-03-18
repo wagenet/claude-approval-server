@@ -3,11 +3,13 @@ import { join } from "node:path";
 
 export interface Settings {
   theme: "dark" | "light";
+  notifEnabled: boolean;
   notifRequireInteraction: boolean;
 }
 
 const DEFAULTS: Settings = {
   theme: "dark",
+  notifEnabled: true,
   notifRequireInteraction: true,
 };
 const SETTINGS_FILE = join(homedir(), ".claude", "claude-approval-server", "settings.json");

@@ -39,6 +39,7 @@ export function createRoutes(
         const body = (await req.json()) as Partial<Settings>;
         if (typeof body.theme === "string" && (body.theme === "dark" || body.theme === "light"))
           settings.theme = body.theme;
+        if (typeof body.notifEnabled === "boolean") settings.notifEnabled = body.notifEnabled;
         if (typeof body.notifRequireInteraction === "boolean")
           settings.notifRequireInteraction = body.notifRequireInteraction;
         await saveSettings();

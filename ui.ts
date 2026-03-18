@@ -19,6 +19,7 @@ import {
 const POLL_MS = 1000;
 const AUTO_DENY_MS = 10 * 60 * 1000;
 let appConfig = {
+  notifEnabled: true,
   notifRequireInteraction: true,
   theme: "dark" as "dark" | "light",
 };
@@ -52,7 +53,7 @@ function updateNotifBanner() {
 updateNotifBanner();
 
 function notify(title: string, body: string, opts: NotificationOptions = {}) {
-  if (Notification.permission !== "granted") return;
+  if (!appConfig.notifEnabled || Notification.permission !== "granted") return;
   const n = new Notification(title, { body, ...opts });
   n.onclick = () => {
     window.focus();
@@ -639,12 +640,14 @@ const settingsClose = document.getElementById("settings-close")!;
 const settingsSave = document.getElementById("settings-save")!;
 // SAFETY: these IDs are defined in ui.html and always present as their respective input elements
 const settingTheme = document.getElementById("setting-theme") as HTMLSelectElement;
+const settingNotifEnabled = document.getElementById("setting-notif-enabled") as HTMLInputElement;
 const settingRequireInteraction = document.getElementById(
   "setting-require-interaction",
 ) as HTMLInputElement;
 
 settingsBtn.addEventListener("click", () => {
   settingTheme.value = appConfig.theme;
+  settingNotifEnabled.checked = appConfig.notifEnabled;
   settingRequireInteraction.checked = appConfig.notifRequireInteraction;
   settingsModal.classList.add("open");
 });
@@ -658,6 +661,7 @@ settingsModal.addEventListener("click", (e) => {
 settingsSave.addEventListener("click", async () => {
   const patch = {
     theme: settingTheme.value as "dark" | "light",
+    notifEnabled: settingNotifEnabled.checked,
     notifRequireInteraction: settingRequireInteraction.checked,
   };
   try {
