@@ -118,6 +118,102 @@
     .badge-write   { background: #dc262622; color: #f87171; border: 1px solid #dc262644; }
     .badge-edit    { background: #d9770622; color: #fb923c; border: 1px solid #d9770644; }
     .badge-default { background: #0ea5e922; color: #38bdf8; border: 1px solid #0ea5e944; }
+    .badge-plan    { background: #d9770622; color: #fb923c; border: 1px solid #d9770644; }
+    .card-plan     { border-left: 3px solid #d97706; }
+
+    #plan-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 100;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+    #plan-modal.open { display: flex; align-items: flex-start; justify-content: center; }
+
+    #plan-modal-inner {
+      background: #1e2330;
+      border: 1px solid #2d3548;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 860px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #plan-modal-header {
+      padding: 1.25rem 1.5rem 0.75rem;
+      border-bottom: 1px solid #2d3548;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    #plan-modal-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      flex: 1;
+    }
+
+    #plan-modal-body {
+      padding: 1.25rem 1.5rem;
+      font-size: 0.875rem;
+      color: #cbd5e1;
+      line-height: 1.6;
+      max-height: calc(100vh - 12rem);
+      overflow-y: auto;
+    }
+
+    #plan-modal-body h1, #plan-modal-body h2, #plan-modal-body h3 {
+      color: #e2e8f0;
+      font-weight: 600;
+      margin: 1.25rem 0 0.5rem;
+    }
+    #plan-modal-body h1 { font-size: 1.1rem; }
+    #plan-modal-body h2 { font-size: 0.95rem; }
+    #plan-modal-body h3 { font-size: 0.875rem; color: #94a3b8; }
+    #plan-modal-body p { margin-bottom: 0.75rem; line-height: 1.6; }
+    #plan-modal-body ul, #plan-modal-body ol {
+      margin: 0.5rem 0 0.75rem 1.25rem;
+      line-height: 1.6;
+    }
+    #plan-modal-body li { margin-bottom: 0.25rem; }
+    #plan-modal-body code {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.8em;
+      background: #0f1117;
+      padding: 0.1em 0.35em;
+      border-radius: 3px;
+      color: #fb923c;
+    }
+    #plan-modal-body pre {
+      background: #0f1117;
+      border: 1px solid #2d3548;
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.75rem;
+      overflow-x: auto;
+      max-height: none;
+    }
+    #plan-modal-body pre code { background: none; padding: 0; color: #e2e8f0; }
+    #plan-modal-body hr { border: none; border-top: 1px solid #2d3548; margin: 1rem 0; }
+    #plan-modal-body strong { color: #e2e8f0; }
+
+    #plan-modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #2d3548;
+      display: flex;
+      gap: 0.625rem;
+    }
+
+    .btn-approve-plan {
+      background: #16a34a;
+      color: #fff;
+    }
+    .btn-approve-plan:hover { background: #15803d; }
+    .btn-approve-plan:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .session {
       font-size: 0.72rem;
@@ -290,6 +386,22 @@
   </style>
 </head>
 <body>
+  <div id="plan-modal">
+    <div id="plan-modal-inner">
+      <div id="plan-modal-header">
+        <span class="badge badge-plan">ExitPlanMode</span>
+        <span id="plan-modal-title"></span>
+      </div>
+      <div id="plan-modal-body"></div>
+      <div id="plan-modal-footer">
+        <button class="btn-approve-plan" id="plan-modal-approve">Approve Plan</button>
+        <button class="btn-deny" id="plan-modal-deny">Deny</button>
+        <button class="btn-focus" id="plan-modal-focus" style="display:none">Focus</button>
+        <button class="btn-dismiss" id="plan-modal-close" style="margin-left:auto">Close</button>
+      </div>
+    </div>
+  </div>
+
   <div class="columns">
     <div class="column">
       <h1><span class="dot"></span> Approval Queue</h1>

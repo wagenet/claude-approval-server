@@ -1,5 +1,6 @@
 import hljs from 'highlight.js'
 import * as Diff from 'diff'
+import { marked } from 'marked'
 import 'highlight.js/styles/github-dark.min.css'
 
 interface StoppedSession {
@@ -40,8 +41,68 @@ function badgeClass(toolName: string | undefined): string {
   if (toolName === 'Bash')  return 'badge-bash'
   if (toolName === 'Write') return 'badge-write'
   if (toolName === 'Edit')  return 'badge-edit'
+  if (toolName === 'ExitPlanMode' || toolName === 'EnterPlanMode') return 'badge-plan'
   return 'badge-default'
 }
+
+// Plan modal logic
+let planModalDecide: ((decision: string) => void) | null = null
+
+function openPlanModal(item: QueueItem, decide: (decision: string) => void) {
+  const modal = document.getElementById('plan-modal')!
+  const title = document.getElementById('plan-modal-title')!
+  const body = document.getElementById('plan-modal-body')!
+  const approveBtn = document.getElementById('plan-modal-approve') as HTMLButtonElement
+  const denyBtn = document.getElementById('plan-modal-deny') as HTMLButtonElement
+  const focusBtn = document.getElementById('plan-modal-focus') as HTMLButtonElement
+  const closeBtn = document.getElementById('plan-modal-close') as HTMLButtonElement
+
+  const plan = (item.tool_input?.plan ?? '') as string
+  const firstLine = plan.split('\n').find(l => l.trim()) ?? item.tool_name ?? 'Plan'
+  title.textContent = firstLine.replace(/^#+\s*/, '')
+  body.innerHTML = marked.parse(plan) as string
+
+  approveBtn.disabled = false
+  denyBtn.disabled = false
+
+  planModalDecide = decide
+
+  const ti = item.terminal_info
+  const hasFocusTarget = !!(ti?.iterm_session_id || ti?.ghostty_resources_dir || ti?.term_program)
+  focusBtn.style.display = hasFocusTarget ? '' : 'none'
+  focusBtn.onclick = () => fetch(`/focus/${item.id}`, { method: 'POST' })
+
+  closeBtn.onclick = () => {
+    modal.classList.remove('open')
+    planModalDecide = null
+  }
+
+  modal.classList.add('open')
+
+  approveBtn.onclick = async () => {
+    approveBtn.disabled = true
+    denyBtn.disabled = true
+    modal.classList.remove('open')
+    planModalDecide = null
+    decide('allow')
+  }
+
+  denyBtn.onclick = async () => {
+    approveBtn.disabled = true
+    denyBtn.disabled = true
+    modal.classList.remove('open')
+    planModalDecide = null
+    decide('deny')
+  }
+}
+
+// Close modal on backdrop click (module scripts run after DOM is ready, no DOMContentLoaded needed)
+document.getElementById('plan-modal')!.addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) {
+    (e.currentTarget as HTMLElement).classList.remove('open')
+    planModalDecide = null
+  }
+})
 
 function langFromPath(path: string): string {
   const ext = path.split('.').pop()?.toLowerCase() ?? ''
@@ -213,7 +274,8 @@ function makeAskUserQuestionCard(item: QueueItem): HTMLElement {
 function makeCard(item: QueueItem): HTMLElement {
   if (item.tool_name === 'AskUserQuestion') return makeAskUserQuestionCard(item)
   const card = document.createElement('div')
-  card.className = 'card'
+  const isPlan = item.tool_name === 'ExitPlanMode' || item.tool_name === 'EnterPlanMode'
+  card.className = isPlan ? 'card card-plan' : 'card'
   card.dataset.id = item.id
 
   const sessionId = item.session_id
@@ -242,7 +304,7 @@ function makeCard(item: QueueItem): HTMLElement {
     <div class="code-block-wrapper"></div>
     <div class="explanation" style="display:none"></div>
     <div class="actions">
-      <button class="btn-allow">Allow</button>
+      <button class="btn-allow">${isPlan ? 'Review Plan…' : 'Allow'}</button>
       <button class="btn-deny">Deny</button>
       <button class="btn-explain">Explain</button>
       <button class="btn-focus"${hasFocusTarget ? '' : ' style="display:none"'}>Focus</button>
@@ -288,7 +350,13 @@ function makeCard(item: QueueItem): HTMLElement {
     }
   }
 
-  allowBtn.addEventListener('click', () => decide('allow'))
+  allowBtn.addEventListener('click', () => {
+    if (isPlan) {
+      openPlanModal(item, decide)
+    } else {
+      decide('allow')
+    }
+  })
   denyBtn.addEventListener('click', () => decide('deny'))
 
   explainBtn.addEventListener('click', async () => {
