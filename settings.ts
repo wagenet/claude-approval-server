@@ -1,3 +1,6 @@
+import { homedir } from "node:os";
+import { join } from "node:path";
+
 export interface Settings {
   theme: "dark" | "light";
   notifRequireInteraction: boolean;
@@ -7,7 +10,7 @@ const DEFAULTS: Settings = {
   theme: "dark",
   notifRequireInteraction: true,
 };
-const SETTINGS_FILE = "./settings.json";
+const SETTINGS_FILE = join(homedir(), ".claude", "claude-approval-server", "settings.json");
 
 export const settings: Settings = loadSettings();
 

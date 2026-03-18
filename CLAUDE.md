@@ -12,6 +12,7 @@ This is a Claude Code approval server. It intercepts Claude's `PermissionRequest
 - `index.ts` — Bun HTTP server (all state is in-memory; no database)
 - `ui.ts` — Frontend code bundled via `ui.html`
 - `hook-shim.sh` — Bash shim invoked by Claude Code hooks; enriches payload with terminal env vars and forwards to the server via `curl`
+- `cli.ts` — CLI entry point; `serve` subcommand starts the server (used by `brew services`)
 
 **External runtime dependencies** (not in package.json):
 
@@ -22,7 +23,12 @@ This is a Claude Code approval server. It intercepts Claude's `PermissionRequest
 **Running:**
 
 - Dev: `bun --hot index.ts`
-- Production: launchd via `com.pwagenet.claude-approval.plist`; logs go to `/tmp/claude-approval.log`
+- Production: managed via `brew services`; logs go to `/tmp/claude-approval.log`
+
+**Releases:**
+
+- Use conventional commits (`feat:`, `fix:`, `chore:`, `feat!:` for breaking). release-please reads these to determine version bump and generate the changelog.
+- Merge conventional commits to main → release-please opens a "Release vX.Y.Z" PR → merge → binaries build and tap formula updates automatically.
 
 **Key invariants:**
 

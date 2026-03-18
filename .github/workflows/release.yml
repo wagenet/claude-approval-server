@@ -1,0 +1,32 @@
+name: Release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - name: Build binaries
+        run: |
+          bun build --compile --minify --target=bun-darwin-arm64 cli.ts \
+            --outfile dist/claude-approval-server-macos-arm64
+          bun build --compile --minify --target=bun-darwin-x64 cli.ts \
+            --outfile dist/claude-approval-server-macos-x86_64
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/claude-approval-server-*
+      - name: Update Homebrew formula
+        run: |
+          VERSION="${{ github.ref_name }}"
+          SHA_ARM=$(shasum -a 256 dist/claude-approval-server-macos-arm64 | awk '{print $1}')
+          SHA_X64=$(shasum -a 256 dist/claude-approval-server-macos-x86_64 | awk '{print $1}')
+          ruby Formula/update-formula.rb "$VERSION" "$SHA_ARM" "$SHA_X64"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore: update homebrew formula to ${VERSION}"
+          git push

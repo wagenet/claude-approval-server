@@ -22,7 +22,7 @@ When Claude uses `AskUserQuestion`, the web UI shows the question text and avail
 
 **Terminal focus:**
 
-The hook shim (`hook-shim.sh`) captures terminal environment variables (`TERM_PROGRAM`, `ITERM_SESSION_ID`, `GHOSTTY_RESOURCES_DIR`) and includes them in the payload. The web UI shows a Focus button on each card that activates the originating terminal window via AppleScript. Supported terminals:
+The hook shim captures terminal environment variables (`TERM_PROGRAM`, `ITERM_SESSION_ID`, `GHOSTTY_RESOURCES_DIR`) and includes them in the payload. The web UI shows a Focus button on each card that activates the originating terminal window via AppleScript. Supported terminals:
 
 - **iTerm2** — focuses the exact session (tab + split) using the session's unique ID
 - **Ghostty** (1.3+) — matches by working directory to find the right window/tab
@@ -38,6 +38,42 @@ When a Claude session ends, the `Stop` hook fires. The server records the finish
 brew install jq
 ```
 
+## Install
+
+```sh
+brew tap wagenet/claude-approval-server https://github.com/wagenet/claude-approval-server
+brew install claude-approval-server
+brew services start claude-approval-server
+```
+
+Homebrew automatically configures Claude Code hooks during install. Restart Claude Code for hook changes to take effect.
+
+The binary is self-contained — no bun or other runtime required.
+
+## Update
+
+```sh
+brew upgrade claude-approval-server
+brew services restart claude-approval-server
+```
+
+## Commands
+
+```
+claude-approval-server serve          Start the server (used by brew services)
+claude-approval-server install-hooks  Configure Claude Code hooks in ~/.claude/settings.json (recovery)
+claude-approval-server uninstall      Remove Claude Code hooks
+claude-approval-server status         Show server status
+claude-approval-server logs           Tail server logs
+```
+
+`install-hooks` is a recovery command — e.g., if you clear `~/.claude/settings.json`. Homebrew runs it automatically on install and upgrade.
+
+## Logs
+
+- stdout: `/tmp/claude-approval.log`
+- stderr: `/tmp/claude-approval.error.log`
+
 ## Run (dev)
 
 ```sh
@@ -47,36 +83,37 @@ bun run index.ts
 UI: http://localhost:4759
 Health: http://localhost:4759/health
 
-## Hook configuration
+## Hook configuration (reference)
 
-Add to `~/.claude/settings.json` (adjust the path to `hook-shim.sh`):
+Homebrew configures these hooks automatically via `post_install`. For reference, the entries added to `~/.claude/settings.json` are:
 
 ```json
 "hooks": {
   "PermissionRequest": [{
+    "matcher": "",
     "hooks": [{
       "type": "command",
-      "command": "/path/to/claude-approval-server/hook-shim.sh pending",
+      "command": "~/.claude/claude-approval-server/hook-shim.sh pending",
       "timeout": 600
     }]
   }],
   "PostToolUse": [{
+    "matcher": "",
     "hooks": [{
       "type": "command",
-      "command": "/path/to/claude-approval-server/hook-shim.sh post-tool-use",
+      "command": "~/.claude/claude-approval-server/hook-shim.sh post-tool-use",
       "timeout": 5
     }]
   }],
   "Stop": [{
+    "matcher": "",
     "hooks": [{
       "type": "command",
-      "command": "/path/to/claude-approval-server/hook-shim.sh stop"
+      "command": "~/.claude/claude-approval-server/hook-shim.sh stop"
     }]
   }]
 }
 ```
-
-The shim script reads the hook payload from stdin, injects terminal environment variables (for the Focus feature), and forwards to the server via `curl`.
 
 `PermissionRequest` — Claude waits up to 10 minutes for approval. If the server is unreachable, Claude falls back to its normal approval prompt.
 
@@ -84,37 +121,6 @@ The shim script reads the hook payload from stdin, injects terminal environment 
 
 `Stop` — fires when a Claude session ends. The server records it in the Finished Sessions column until dismissed.
 
-## Install as a persistent background service (launchd)
+## Contributing
 
-Copy the plist to the LaunchAgents directory and load it:
-
-```sh
-cp com.pwagenet.claude-approval.plist ~/Library/LaunchAgents/
-launchctl load ~/Library/LaunchAgents/com.pwagenet.claude-approval.plist
-```
-
-Check it's running:
-
-```sh
-launchctl list | grep claude-approval
-curl http://localhost:4759/health
-```
-
-Logs:
-
-- stdout: `/tmp/claude-approval.log`
-- stderr: `/tmp/claude-approval.error.log`
-
-### Stop / unload
-
-```sh
-launchctl unload ~/Library/LaunchAgents/com.pwagenet.claude-approval.plist
-```
-
-### Restart after changes
-
-```sh
-launchctl unload ~/Library/LaunchAgents/com.pwagenet.claude-approval.plist
-cp com.pwagenet.claude-approval.plist ~/Library/LaunchAgents/
-launchctl load ~/Library/LaunchAgents/com.pwagenet.claude-approval.plist
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the release process and dev setup.
