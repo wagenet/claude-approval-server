@@ -228,8 +228,8 @@ export function createRoutes(
                   .join("");
                 if (texts) lastText = texts;
               }
-            } catch {
-              /* skip malformed lines */
+            } catch (e) {
+              console.warn(`[transcript] skipping malformed line: ${String(e)}`);
             }
           }
           if (!lastText) return Response.json({ error: "No output found" }, { status: 404 });
