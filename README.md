@@ -1,6 +1,6 @@
 # claude-approval-server
 
-Approval server for Claude Code hooks. Blocks tool calls until approved or denied, and tracks finished sessions so you can check whether more work is needed.
+Approval server for Claude Code hooks. Blocks tool calls until approved or denied, and tracks idle sessions so you can check whether more work is needed.
 
 ## How it works
 
@@ -18,7 +18,11 @@ If no decision is made within 10 minutes, the request is auto-denied.
 
 **AskUserQuestion:**
 
-When Claude uses `AskUserQuestion`, the web UI shows the question text and available options as read-only context. Use **Focus** to bring the terminal forward and answer there, or **Dismiss** to acknowledge and clear the card. The card also clears automatically when the next tool call from that session arrives.
+When Claude uses `AskUserQuestion`, the web UI shows the question text and available options as read-only context. Use **Focus** to bring the terminal forward and answer there, or **Dismiss** to unblock Claude and clear the card. The card also clears automatically when the next tool call from that session arrives.
+
+**Plan review (ExitPlanMode / EnterPlanMode):**
+
+When Claude enters or exits plan mode, the web UI highlights the card and opens a full-screen modal showing the plan. Use **Approve Plan** to let Claude proceed or **Deny** to reject it.
 
 **Terminal focus:**
 
@@ -30,7 +34,11 @@ The hook shim (`hook-shim.sh`) captures terminal environment variables (`TERM_PR
 
 **Session tracking:**
 
-When a Claude session ends, the `Stop` hook fires. The server records the finished session and shows it in the "Finished Sessions" column of the web UI. Each card displays the final assistant output from the session transcript, a Focus button to return to the terminal, and a Dismiss button to clear the card.
+When a Claude session ends, the `Stop` hook fires. The server records the finished session and shows it in the **Idle Sessions** column of the web UI. Each card displays the final assistant output from the session transcript, a Focus button to return to the terminal, and a Dismiss button to clear the card.
+
+**Settings:**
+
+Click the ⚙ button in the top-right corner to open Settings. You can choose between dark and light themes, and toggle whether approval notifications stay on screen until dismissed. Settings are saved to `settings.json` and persist across restarts.
 
 ## Prerequisites
 
@@ -41,7 +49,7 @@ brew install jq
 ## Run (dev)
 
 ```sh
-bun run index.ts
+bun --hot index.ts
 ```
 
 UI: http://localhost:4759
@@ -82,7 +90,7 @@ The shim script reads the hook payload from stdin, injects terminal environment 
 
 `PostToolUse` — fires after each tool runs. If you approved a request from the CLI prompt (bypassing the web UI), this clears the stale pending item from the queue automatically.
 
-`Stop` — fires when a Claude session ends. The server records it in the Finished Sessions column until dismissed.
+`Stop` — fires when a Claude session ends. The server records it in the Idle Sessions column until dismissed.
 
 ## Install as a persistent background service (launchd)
 
