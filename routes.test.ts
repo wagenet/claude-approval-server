@@ -360,6 +360,55 @@ describe("GET /idle/:id/output", () => {
   });
 });
 
+describe("GET /idle (cwd propagation)", () => {
+  let server: ReturnType<typeof Bun.serve>;
+  let idle: Map<string, IdleSession>;
+
+  beforeEach(() => {
+    ({ server, idle } = makeServer());
+  });
+  afterEach(() => server.stop(true));
+
+  test("includes cwd from payload", async () => {
+    idle.set("sess-cwd", {
+      sessionId: "sess-cwd",
+      idleSince: Date.now(),
+      payload: { cwd: "/home/user/my-project", session_id: "sess-cwd" },
+    });
+
+    const res = await fetch(`http://localhost:${server.port}/idle`);
+    const body = (await res.json()) as { sessionId: string; cwd?: string }[];
+    expect(body).toHaveLength(1);
+    expect(body[0].cwd).toBe("/home/user/my-project");
+  });
+
+  test("cwd is undefined when not in payload", async () => {
+    idle.set("sess-nocwd", {
+      sessionId: "sess-nocwd",
+      idleSince: Date.now(),
+      payload: { session_id: "sess-nocwd" },
+    });
+
+    const res = await fetch(`http://localhost:${server.port}/idle`);
+    const body = (await res.json()) as { sessionId: string; cwd?: string }[];
+    expect(body).toHaveLength(1);
+    expect(body[0].cwd).toBeUndefined();
+  });
+
+  test("stop endpoint stores cwd from payload", async () => {
+    await fetch(`http://localhost:${server.port}/stop`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: "sess-stopcwd", cwd: "/projects/foo" }),
+    });
+
+    const res = await fetch(`http://localhost:${server.port}/idle`);
+    const body = (await res.json()) as { sessionId: string; cwd?: string }[];
+    expect(body).toHaveLength(1);
+    expect(body[0].cwd).toBe("/projects/foo");
+  });
+});
+
 describe("DELETE /idle/:id", () => {
   let server: ReturnType<typeof Bun.serve>;
   let idle: Map<string, IdleSession>;
