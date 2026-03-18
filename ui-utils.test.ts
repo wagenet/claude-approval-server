@@ -208,6 +208,21 @@ describe("parseHeredoc", () => {
   test("piped command returns null", () => {
     expect(parseHeredoc("cat file | grep x")).toBeNull();
   });
+  test("python3 interpreter heredoc detects python", () => {
+    const result = parseHeredoc("python3 << 'EOF'\nprint('hello')\nEOF");
+    expect(result).not.toBeNull();
+    expect(result!.lang).toBe("python");
+  });
+  test("compound command with python3 detects python", () => {
+    const result = parseHeredoc("cd /some/dir && python3 << 'EOF'\nprint('hello')\nEOF");
+    expect(result).not.toBeNull();
+    expect(result!.lang).toBe("python");
+  });
+  test("node interpreter heredoc detects javascript", () => {
+    const result = parseHeredoc("node << EOF\nconsole.log(1)\nEOF");
+    expect(result).not.toBeNull();
+    expect(result!.lang).toBe("javascript");
+  });
 });
 
 describe("parseInterpreterCall", () => {
@@ -256,9 +271,7 @@ describe("parseGitCommit", () => {
     expect(result).not.toBeNull();
     expect(result!.subject).toBe("fix(ui): make filename prominent");
     expect(result!.body).toBe("Split the path into dir and base.");
-    expect(result!.trailers).toEqual([
-      "Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>",
-    ]);
+    expect(result!.trailers).toEqual(["Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"]);
   });
 
   test("simplifies preamble", () => {

@@ -166,7 +166,13 @@ export function parseHeredoc(cmd: string): EmbeddedCode | null {
   const body = match[3];
   // Find the last filename-like token in the header for language detection
   const fileTokens = header.match(/\S+\.\w+/g);
-  const lang = fileTokens ? langFromPath(fileTokens[fileTokens.length - 1]) : "plaintext";
+  let lang: string;
+  if (fileTokens) {
+    lang = langFromPath(fileTokens[fileTokens.length - 1]);
+  } else {
+    const interpMatch = header.match(/\b(python3?|node|ruby|perl|bash|sh)\b/);
+    lang = interpMatch ? langFromInterpreter(interpMatch[1]) : "plaintext";
+  }
   return { header, body, lang };
 }
 
@@ -205,9 +211,7 @@ export interface GitCommitInfo {
  * Returns parsed commit info or null if not matched.
  */
 export function parseGitCommit(cmd: string): GitCommitInfo | null {
-  const match = cmd.match(
-    /^([\s\S]*?<<\s*['"]?(\w+)['"]?)\s*\n([\s\S]*?)\n\2[ \t]*\n\)["']?\s*$/,
-  );
+  const match = cmd.match(/^([\s\S]*?<<\s*['"]?(\w+)['"]?)\s*\n([\s\S]*?)\n\2[ \t]*\n\)["']?\s*$/);
   if (!match) return null;
 
   const rawPreamble = match[1].trim();
@@ -229,7 +233,10 @@ export function parseGitCommit(cmd: string): GitCommitInfo | null {
   }
   if (i > 0 && lines[i].trim() === "") i--;
 
-  const body = lines.slice(1, i + 1).join("\n").trim();
+  const body = lines
+    .slice(1, i + 1)
+    .join("\n")
+    .trim();
   return { preamble, subject, body, trailers };
 }
 
