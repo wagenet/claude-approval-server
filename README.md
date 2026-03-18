@@ -15,6 +15,10 @@ You can still approve from Claude Code's own CLI prompt. When you do, the `PostT
 
 If no decision is made within 10 minutes, the request is auto-denied.
 
+**AskUserQuestion:**
+
+When Claude uses `AskUserQuestion`, the web UI shows the question text and available options as read-only context. Use **Focus** to bring the terminal forward and answer there, or **Dismiss** to acknowledge and clear the card. The card also clears automatically when the next tool call from that session arrives.
+
 **Terminal focus:**
 
 The hook shim (`hook-shim.sh`) captures terminal environment variables (`TERM_PROGRAM`, `ITERM_SESSION_ID`, `GHOSTTY_RESOURCES_DIR`) and includes them in the payload. The web UI shows a Focus button on each card that activates the originating terminal window via AppleScript. Supported terminals:
@@ -25,7 +29,7 @@ The hook shim (`hook-shim.sh`) captures terminal environment variables (`TERM_PR
 
 **Session tracking:**
 
-When a Claude session ends, the `Stop` hook fires. The server records the finished session and shows it in the "Finished Sessions" column of the web UI. Cards persist until you dismiss them, giving you a chance to review and decide if more work is needed.
+When a Claude session ends, the `Stop` hook fires. The server records the finished session and shows it in the "Finished Sessions" column of the web UI. Each card displays the final assistant output from the session transcript, a Focus button to return to the terminal, and a Dismiss button to clear the card.
 
 ## Prerequisites
 
