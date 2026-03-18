@@ -76,12 +76,13 @@ end tell`;
 
   if (info.ghostty_resources_dir || termProgram === "ghostty") {
     if (!cwd) return 'tell application "Ghostty" to activate';
+    const escapedCwd = cwd.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
     return `
 tell application "Ghostty"
   repeat with w in windows
     repeat with t in tabs of w
       repeat with trm in terminals of t
-        if working directory of trm is "${cwd}" then
+        if working directory of trm is "${escapedCwd}" then
           tell w to activate window
           tell t to select tab
           tell trm to focus
