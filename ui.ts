@@ -12,13 +12,47 @@ const renderedIdle = new Map<string, HTMLElement>();
 
 if (Notification.permission === "default") void Notification.requestPermission();
 
-function notify(title: string, body: string) {
+function notifInstructions(): string {
+  const ua = navigator.userAgent;
+  if (ua.includes("Firefox")) {
+    return 'Open <a href="about:preferences#privacy" target="_blank">about:preferences#privacy</a>, click Settings next to Notifications, find <code>localhost:4759</code>, and set it to Allow.';
+  }
+  if (ua.includes("Safari") && !ua.includes("Chrome")) {
+    return "Open Safari Preferences (⌘,) → Websites → Notifications, find <code>localhost</code>, and set it to Allow.";
+  }
+  // Chrome / Chromium
+  return 'Open <a href="chrome://settings/content/notifications" target="_blank">chrome://settings/content/notifications</a>, find <code>localhost:4759</code>, and set it to Allow.';
+}
+
+function updateNotifBanner() {
+  const banner = document.getElementById("notif-banner");
+  if (!banner) return;
+  if (Notification.permission === "denied") {
+    banner.innerHTML = `Notifications are blocked. To fix: ${notifInstructions()} Then reload this page.`;
+    banner.style.display = "";
+  } else {
+    banner.style.display = "none";
+  }
+}
+updateNotifBanner();
+
+let swReg: ServiceWorkerRegistration | null = null;
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker
+    .register("/sw.js")
+    .then((reg) => {
+      swReg = reg;
+    })
+    .catch(() => {});
+}
+
+async function notify(title: string, body: string, opts: NotificationOptions = {}) {
   if (Notification.permission !== "granted") return;
-  const n = new Notification(title, { body });
-  n.onclick = () => {
-    window.focus();
-    n.close();
-  };
+  if (swReg) {
+    await swReg.showNotification(title, { body, ...opts });
+  } else {
+    new Notification(title, { body, ...opts });
+  }
 }
 
 fetch("/config")
@@ -496,7 +530,11 @@ async function poll() {
         const card = makeCard(item);
         q.append(card);
         rendered.set(item.id, card);
-        notify("Claude needs approval", item.tool_name ?? "unknown");
+        void notify(
+          `Claude needs approval: ${item.tool_name ?? "unknown"}`,
+          shortCwd(item.cwd ?? ""),
+          { requireInteraction: true },
+        );
       }
     }
 
@@ -525,7 +563,7 @@ async function pollIdle() {
         const card = makeIdleCard(session);
         list.append(card);
         renderedIdle.set(session.sessionId, card);
-        notify("Claude session idle", session.sessionId.slice(0, 8));
+        void notify("Claude session idle", shortCwd(session.cwd ?? ""));
       }
     }
 

@@ -9,6 +9,10 @@ Bun.serve({
   idleTimeout: 0,
   routes: {
     "/": ui,
+    "/sw.js": () =>
+      new Response(Bun.file("./sw.js"), {
+        headers: { "Content-Type": "application/javascript; charset=utf-8" },
+      }),
     ...createRoutes(pendingRequests, idleSessions, AUTO_DENY_TIMEOUT_MS),
   },
 });
