@@ -6,9 +6,9 @@ export interface PendingEntry {
   explaining?: boolean;
 }
 
-export interface StoppedSession {
+export interface IdleSession {
   sessionId: string;
-  stoppedAt: number;
+  idleSince: number;
   transcriptPath?: string;
   payload: Record<string, unknown>;
 }

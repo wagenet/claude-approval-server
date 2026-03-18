@@ -1,6 +1,6 @@
-export interface StoppedSession {
+export interface IdleSession {
   sessionId: string;
-  stoppedAt: number;
+  idleSince: number;
   transcriptPath?: string;
   terminal_info?: TerminalInfo;
   cwd?: string;

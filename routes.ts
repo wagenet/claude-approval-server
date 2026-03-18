@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import type { PendingEntry, StoppedSession } from "./types";
+import type { PendingEntry, IdleSession } from "./types";
 import {
   asString,
   stableStringify,
@@ -24,7 +24,7 @@ function focusTerminal(entry: PendingEntry) {
 
 export function createRoutes(
   pending: Map<string, PendingEntry>,
-  stoppedSessions: Map<string, StoppedSession>,
+  idleSessions: Map<string, IdleSession>,
   autoDenyMs: number,
 ) {
   return {
@@ -134,7 +134,7 @@ export function createRoutes(
 
     "/health": {
       GET() {
-        return Response.json({ ok: true, pending: pending.size, stopped: stoppedSessions.size });
+        return Response.json({ ok: true, pending: pending.size, idle: idleSessions.size });
       },
     },
 
@@ -145,9 +145,9 @@ export function createRoutes(
         const sessionId = asString(payload.session_id);
         const transcriptPath =
           typeof payload.transcript_path === "string" ? payload.transcript_path : undefined;
-        stoppedSessions.set(sessionId, {
+        idleSessions.set(sessionId, {
           sessionId,
-          stoppedAt: Date.now(),
+          idleSince: Date.now(),
           transcriptPath,
           payload,
         });
@@ -155,7 +155,7 @@ export function createRoutes(
         // Clear any pending entries for this session (e.g. last tool was CLI-denied)
         for (const [pendingId, entry] of pending) {
           if (entry.payload.session_id === sessionId) {
-            logRemoval(pendingId, "session-stopped", entry);
+            logRemoval(pendingId, "session-idle", entry);
             pending.delete(pendingId);
             entry.resolve("deny");
           }
@@ -164,12 +164,12 @@ export function createRoutes(
       },
     },
 
-    "/stopped": {
+    "/idle": {
       GET() {
-        const items = [...stoppedSessions.values()].map(
-          ({ sessionId, stoppedAt, transcriptPath, payload }) => ({
+        const items = [...idleSessions.values()].map(
+          ({ sessionId, idleSince, transcriptPath, payload }) => ({
             sessionId,
-            stoppedAt,
+            idleSince,
             transcriptPath,
             terminal_info: payload.terminal_info,
             cwd: payload.cwd,
@@ -179,18 +179,18 @@ export function createRoutes(
       },
     },
 
-    "/stopped/:id": {
+    "/idle/:id": {
       DELETE(req: Request & { params: { id: string } }) {
-        const deleted = stoppedSessions.delete(req.params.id);
+        const deleted = idleSessions.delete(req.params.id);
         return deleted
           ? Response.json({ ok: true })
           : Response.json({ error: "Not found" }, { status: 404 });
       },
     },
 
-    "/stopped/:id/output": {
+    "/idle/:id/output": {
       async GET(req: Request & { params: { id: string } }) {
-        const session = stoppedSessions.get(req.params.id);
+        const session = idleSessions.get(req.params.id);
         if (!session) return Response.json({ error: "Not found" }, { status: 404 });
         if (!session.transcriptPath)
           return Response.json({ error: "No transcript" }, { status: 404 });
@@ -221,18 +221,20 @@ export function createRoutes(
       },
     },
 
-    "/focus-stopped/:id": {
+    "/focus-idle/:id": {
       POST(req: Request & { params: { id: string } }) {
-        const session = stoppedSessions.get(req.params.id);
+        const session = idleSessions.get(req.params.id);
         if (!session) return Response.json({ error: "Not found" }, { status: 404 });
         const script = buildFocusScript(session.payload);
         if (script) {
-          console.log("[focus-stopped] script:\n" + script);
+          console.log("[focus-idle] script:\n" + script);
           const proc = Bun.spawn(["osascript", "-e", script], { stdout: "pipe", stderr: "pipe" });
           proc.exited.then(async (code) => {
             const out = await new Response(proc.stdout).text();
             const err = await new Response(proc.stderr).text();
-            console.log(`[focus-stopped] exit=${code} stdout=${JSON.stringify(out)} stderr=${JSON.stringify(err)}`);
+            console.log(
+              `[focus-idle] exit=${code} stdout=${JSON.stringify(out)} stderr=${JSON.stringify(err)}`,
+            );
           });
         }
         return Response.json({ ok: true });
@@ -254,6 +256,7 @@ export function createRoutes(
         const incomingSession =
           typeof payload.session_id === "string" ? payload.session_id : undefined;
         if (incomingSession) {
+          idleSessions.delete(incomingSession);
           for (const [pendingId, entry] of pending) {
             if (entry.payload.session_id === incomingSession) {
               const isAskQuestion = entry.payload.tool_name === "AskUserQuestion";

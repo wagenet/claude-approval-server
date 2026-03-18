@@ -1,5 +1,5 @@
 import { createRoutes } from "./routes";
-import { pendingRequests, stoppedSessions, AUTO_DENY_TIMEOUT_MS } from "./state";
+import { pendingRequests, idleSessions, AUTO_DENY_TIMEOUT_MS } from "./state";
 import ui from "./ui.html";
 
 const PORT = 4759;
@@ -9,7 +9,7 @@ Bun.serve({
   idleTimeout: 0,
   routes: {
     "/": ui,
-    ...createRoutes(pendingRequests, stoppedSessions, AUTO_DENY_TIMEOUT_MS),
+    ...createRoutes(pendingRequests, idleSessions, AUTO_DENY_TIMEOUT_MS),
   },
 });
 

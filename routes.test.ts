@@ -1,17 +1,17 @@
 import { test, expect, describe, beforeEach, afterEach } from "bun:test";
 import { createRoutes } from "./routes";
-import type { PendingEntry, StoppedSession } from "./types";
+import type { PendingEntry, IdleSession } from "./types";
 
 const AUTO_DENY_MS = 600_000;
 
 function makeServer() {
   const pending = new Map<string, PendingEntry>();
-  const stopped = new Map<string, StoppedSession>();
+  const idle = new Map<string, IdleSession>();
   const server = Bun.serve({
     port: 0,
-    routes: createRoutes(pending, stopped, AUTO_DENY_MS),
+    routes: createRoutes(pending, idle, AUTO_DENY_MS),
   });
-  return { server, pending, stopped };
+  return { server, pending, idle };
 }
 
 describe("GET /health", () => {
@@ -24,11 +24,11 @@ describe("GET /health", () => {
 
   test("returns ok with counts", async () => {
     const res = await fetch(`http://localhost:${server.port}/health`);
-    const body = (await res.json()) as { ok: boolean; pending: number; stopped: number };
+    const body = (await res.json()) as { ok: boolean; pending: number; idle: number };
     expect(res.ok).toBe(true);
     expect(body.ok).toBe(true);
     expect(body.pending).toBe(0);
-    expect(body.stopped).toBe(0);
+    expect(body.idle).toBe(0);
   });
 });
 
@@ -217,10 +217,10 @@ describe("POST /pending + POST /decide/:id", () => {
 describe("POST /stop", () => {
   let server: ReturnType<typeof Bun.serve>;
   let pending: Map<string, PendingEntry>;
-  let stopped: Map<string, StoppedSession>;
+  let idle: Map<string, IdleSession>;
 
   beforeEach(() => {
-    ({ server, pending, stopped } = makeServer());
+    ({ server, pending, idle } = makeServer());
   });
   afterEach(() => server.stop(true));
 
@@ -245,7 +245,7 @@ describe("POST /stop", () => {
     });
 
     expect(pending.size).toBe(0);
-    expect(stopped.has("sessStop")).toBe(true);
+    expect(idle.has("sessStop")).toBe(true);
 
     // Stale pending entry was resolved with deny
     const body = (await pendingRes.then((r) => r.json())) as {
@@ -319,12 +319,12 @@ describe("POST /post-tool-use", () => {
   });
 });
 
-describe("GET /stopped/:id/output", () => {
+describe("GET /idle/:id/output", () => {
   let server: ReturnType<typeof Bun.serve>;
-  let stopped: Map<string, StoppedSession>;
+  let idle: Map<string, IdleSession>;
 
   beforeEach(() => {
-    ({ server, stopped } = makeServer());
+    ({ server, idle } = makeServer());
   });
   afterEach(() => server.stop(true));
 
@@ -341,43 +341,43 @@ describe("GET /stopped/:id/output", () => {
     ];
     await Bun.write(tmpPath, lines.join("\n"));
 
-    stopped.set("sess-output", {
+    idle.set("sess-output", {
       sessionId: "sess-output",
-      stoppedAt: Date.now(),
+      idleSince: Date.now(),
       transcriptPath: tmpPath,
       payload: {},
     });
 
-    const res = await fetch(`http://localhost:${server.port}/stopped/sess-output/output`);
+    const res = await fetch(`http://localhost:${server.port}/idle/sess-output/output`);
     const body = (await res.json()) as { output: string };
     expect(res.ok).toBe(true);
     expect(body.output).toBe("final response");
   });
 
   test("404 for unknown session", async () => {
-    const res = await fetch(`http://localhost:${server.port}/stopped/no-such/output`);
+    const res = await fetch(`http://localhost:${server.port}/idle/no-such/output`);
     expect(res.status).toBe(404);
   });
 });
 
-describe("DELETE /stopped/:id", () => {
+describe("DELETE /idle/:id", () => {
   let server: ReturnType<typeof Bun.serve>;
-  let stopped: Map<string, StoppedSession>;
+  let idle: Map<string, IdleSession>;
 
   beforeEach(() => {
-    ({ server, stopped } = makeServer());
+    ({ server, idle } = makeServer());
   });
   afterEach(() => server.stop(true));
 
   test("200 on success", async () => {
-    stopped.set("s1", { sessionId: "s1", stoppedAt: Date.now(), payload: {} });
-    const res = await fetch(`http://localhost:${server.port}/stopped/s1`, { method: "DELETE" });
+    idle.set("s1", { sessionId: "s1", idleSince: Date.now(), payload: {} });
+    const res = await fetch(`http://localhost:${server.port}/idle/s1`, { method: "DELETE" });
     expect(res.ok).toBe(true);
-    expect(stopped.has("s1")).toBe(false);
+    expect(idle.has("s1")).toBe(false);
   });
 
   test("404 on missing", async () => {
-    const res = await fetch(`http://localhost:${server.port}/stopped/nope`, { method: "DELETE" });
+    const res = await fetch(`http://localhost:${server.port}/idle/nope`, { method: "DELETE" });
     expect(res.status).toBe(404);
   });
 });
