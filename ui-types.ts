@@ -4,6 +4,7 @@ export interface IdleSession {
   transcriptPath?: string;
   terminal_info?: TerminalInfo;
   cwd?: string;
+  sessionName?: string;
 }
 
 export interface TerminalInfo {
@@ -21,6 +22,7 @@ export interface QueueItem {
   session_id?: string;
   cwd?: string;
   terminal_info?: TerminalInfo;
+  sessionName?: string;
 }
 
 export interface AskOption {

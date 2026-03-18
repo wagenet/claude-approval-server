@@ -4,6 +4,7 @@ export interface PendingEntry {
   enqueuedAt: number;
   explanation?: string;
   explaining?: boolean;
+  sessionName?: string;
 }
 
 export interface IdleSession {
@@ -11,6 +12,7 @@ export interface IdleSession {
   idleSince: number;
   transcriptPath?: string;
   payload: Record<string, unknown>;
+  sessionName?: string;
 }
 
 export interface TerminalInfo {

@@ -285,11 +285,12 @@ function makeAskUserQuestionCard(item: QueueItem): HTMLElement {
   const questions: AskQuestion[] = Array.isArray(rawQuestions)
     ? (rawQuestions as AskQuestion[])
     : [];
-  const sessionId = item.session_id ? String(item.session_id).slice(0, 8) + "…" : "—";
+  const sessionLabel =
+    item.sessionName ?? (item.session_id ? String(item.session_id).slice(0, 8) + "…" : "—");
 
   const header = document.createElement("div");
   header.className = "card-header";
-  header.innerHTML = `<span class="badge badge-question">Question</span><span class="session">${sessionId}</span>`;
+  header.innerHTML = `<span class="badge badge-question">Question</span><span class="session">${sessionLabel}</span>`;
   card.appendChild(header);
 
   const body = document.createElement("div");
@@ -375,7 +376,8 @@ function makeCard(item: QueueItem): HTMLElement {
   card.className = isPlan ? "card card-plan" : "card";
   card.dataset.id = item.id;
 
-  const sessionId = item.session_id ? String(item.session_id).slice(0, 8) + "…" : "—";
+  const sessionId =
+    item.sessionName ?? (item.session_id ? String(item.session_id).slice(0, 8) + "…" : "—");
 
   const elapsed = () => {
     const remaining = Math.max(
@@ -500,7 +502,7 @@ function makeIdleCard(session: IdleSession): HTMLElement {
   const card = document.createElement("div");
   card.className = "card";
 
-  const sid = session.sessionId.slice(0, 8) + "…";
+  const sid = session.sessionName ?? session.sessionId.slice(0, 8) + "…";
   const when = new Date(session.idleSince).toLocaleTimeString();
   const ti = session.terminal_info;
   const hasFocusTarget = !!(ti?.iterm_session_id || ti?.ghostty_resources_dir || ti?.term_program);

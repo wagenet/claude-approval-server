@@ -1,6 +1,25 @@
 import { existsSync } from "fs";
 import type { TerminalInfo, PendingEntry } from "./types";
 
+export async function readSessionName(transcriptPath: string): Promise<string | undefined> {
+  try {
+    const text = await Bun.file(transcriptPath).text();
+    for (const line of text.split("\n")) {
+      if (!line.trim()) continue;
+      try {
+        const entry = JSON.parse(line);
+        const name = asString(entry.customTitle) || asString(entry.agentName);
+        if (name) return name;
+      } catch {
+        /* skip malformed */
+      }
+    }
+  } catch {
+    /* file not ready yet */
+  }
+  return undefined;
+}
+
 export function stableStringify(val: unknown): string {
   if (val === null || typeof val !== "object") return JSON.stringify(val);
   if (Array.isArray(val)) return "[" + val.map(stableStringify).join(",") + "]";

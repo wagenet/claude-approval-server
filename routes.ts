@@ -10,6 +10,7 @@ import {
   allowResponse,
   denyResponse,
   logRemoval,
+  readSessionName,
 } from "./utils";
 
 function focusTerminal(entry: PendingEntry) {
@@ -49,12 +50,15 @@ export function createRoutes(
 
     "/queue": {
       GET() {
-        const items = [...pending.entries()].map(([id, { payload, enqueuedAt, explanation }]) => ({
-          id,
-          enqueuedAt,
-          explanation,
-          ...payload,
-        }));
+        const items = [...pending.entries()].map(
+          ([id, { payload, enqueuedAt, explanation, sessionName }]) => ({
+            id,
+            enqueuedAt,
+            explanation,
+            ...payload,
+            sessionName,
+          }),
+        );
         return Response.json(items);
       },
     },
@@ -158,12 +162,21 @@ export function createRoutes(
         const sessionId = asString(payload.session_id);
         const transcriptPath =
           typeof payload.transcript_path === "string" ? payload.transcript_path : undefined;
-        idleSessions.set(sessionId, {
+        const idleEntry: import("./types").IdleSession = {
           sessionId,
           idleSince: Date.now(),
           transcriptPath,
           payload,
-        });
+        };
+        idleSessions.set(sessionId, idleEntry);
+        if (transcriptPath) {
+          void readSessionName(transcriptPath).then((name) => {
+            if (name) {
+              const s = idleSessions.get(sessionId);
+              if (s) s.sessionName = name;
+            }
+          });
+        }
         console.log(`[stop] session=${sessionId}`);
         // Clear any pending entries for this session (e.g. last tool was CLI-denied)
         for (const [pendingId, entry] of pending) {
@@ -187,12 +200,13 @@ export function createRoutes(
           }
         }
         const items = [...idleSessions.values()].map(
-          ({ sessionId, idleSince, transcriptPath, payload }) => ({
+          ({ sessionId, idleSince, transcriptPath, payload, sessionName }) => ({
             sessionId,
             idleSince,
             transcriptPath,
             terminal_info: payload.terminal_info,
             cwd: payload.cwd,
+            sessionName,
           }),
         );
         return Response.json(items);
@@ -291,7 +305,19 @@ export function createRoutes(
           }
         }
 
-        pending.set(id, { resolve: resolveDecision, payload, enqueuedAt: Date.now() });
+        const entry: import("./types").PendingEntry = {
+          resolve: resolveDecision,
+          payload,
+          enqueuedAt: Date.now(),
+        };
+        pending.set(id, entry);
+        const transcriptPath =
+          typeof payload.transcript_path === "string" ? payload.transcript_path : undefined;
+        if (transcriptPath) {
+          void readSessionName(transcriptPath).then((name) => {
+            if (name) entry.sessionName = name;
+          });
+        }
         const toolName = asString(payload.tool_name, "unknown");
         const summary = JSON.stringify(payload.tool_input ?? "");
         console.log(`[enqueue] ${toolName} | ${summary.slice(0, 120)} | id=${id}`);
