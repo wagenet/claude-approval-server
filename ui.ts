@@ -3,7 +3,16 @@ import * as Diff from "diff";
 import { marked } from "marked";
 import "highlight.js/styles/github-dark.min.css";
 import type { IdleSession, QueueItem, AskQuestion } from "./ui-types";
-import { asString, badgeClass, shortCwd, langFromPath, getTerminalIcon } from "./ui-utils";
+import {
+  asString,
+  badgeClass,
+  shortCwd,
+  langFromPath,
+  getTerminalIcon,
+  splitPipedCommand,
+  parseHeredoc,
+  parseInterpreterCall,
+} from "./ui-utils";
 
 const POLL_MS = 1000;
 let AUTO_DENY_MS = 10 * 60 * 1000; // fallback until /config responds
@@ -116,7 +125,7 @@ document.getElementById("plan-modal")!.addEventListener("click", (e) => {
   }
 });
 
-function makeDiffBlock(item: QueueItem): { pre: HTMLPreElement; filePath: string } {
+function makeDiffBlock(item: QueueItem): { pre: HTMLElement; filePath: string } {
   const filePath = asString(item.tool_input?.file_path ?? item.tool_input?.path);
   const oldStr = asString(item.tool_input?.old_string);
   const newStr = asString(item.tool_input?.new_string);
@@ -166,7 +175,30 @@ function parseEmbeddedJson(input: Record<string, unknown>): Record<string, unkno
   return result;
 }
 
-function makeCodeBlock(item: QueueItem): { pre: HTMLPreElement; filePath: string } {
+function makeTwoPartBlock(
+  header: string,
+  body: string,
+  lang: string,
+): { pre: HTMLElement; filePath: string } {
+  const wrapper = document.createElement("div");
+  wrapper.className = "two-part-block";
+
+  const makePart = (text: string, language: string): HTMLPreElement => {
+    const pre = document.createElement("pre");
+    const code = document.createElement("code");
+    code.className = `language-${language}`;
+    code.textContent = text;
+    pre.appendChild(code);
+    hljs.highlightElement(code);
+    return pre;
+  };
+
+  wrapper.appendChild(makePart(header, "bash"));
+  wrapper.appendChild(makePart(body, lang));
+  return { pre: wrapper, filePath: "" };
+}
+
+function makeCodeBlock(item: QueueItem): { pre: HTMLElement; filePath: string } {
   if (item.tool_name === "Edit") return makeDiffBlock(item);
 
   const pre = document.createElement("pre");
@@ -174,8 +206,20 @@ function makeCodeBlock(item: QueueItem): { pre: HTMLPreElement; filePath: string
   let filePath = "";
 
   if (item.tool_name === "Bash") {
+    const rawCmd = asString(item.tool_input?.command);
+    const heredoc = parseHeredoc(rawCmd);
+    const interp = !heredoc ? parseInterpreterCall(rawCmd) : null;
+    const piped = !heredoc && !interp ? splitPipedCommand(rawCmd) : null;
+
+    if (heredoc ?? interp) {
+      const info = (heredoc ?? interp)!;
+      return makeTwoPartBlock(info.header, info.body, info.lang);
+    }
+
     code.className = "language-bash";
-    code.textContent = asString(item.tool_input?.command);
+    code.textContent = piped
+      ? piped.map((seg, i) => (i === 0 ? seg : `  | ${seg}`)).join(" \\\n")
+      : rawCmd;
   } else if (item.tool_name === "Write") {
     filePath = asString(item.tool_input?.file_path ?? item.tool_input?.path);
     code.className = `language-${langFromPath(filePath)}`;

@@ -321,7 +321,7 @@
         font-family: "SF Mono", "Fira Code", monospace;
         overflow-x: auto;
         white-space: pre-wrap;
-        word-break: break-all;
+        word-break: break-word;
         margin-bottom: 1rem;
         max-height: 200px;
         overflow-y: auto;
@@ -332,6 +332,13 @@
         font-family: "SF Mono", "Fira Code", monospace;
         color: #64748b;
         margin-bottom: 0.25rem;
+      }
+
+      .two-part-block pre {
+        margin-bottom: 0.5rem;
+      }
+      .two-part-block pre:last-child {
+        margin-bottom: 0;
       }
 
       .diff-block {
@@ -562,7 +569,7 @@
     </style>
   </head>
   <body>
-    <div id="notif-banner" style="display:none"></div>
+    <div id="notif-banner" style="display: none"></div>
     <div id="plan-modal">
       <div id="plan-modal-inner">
         <div id="plan-modal-header">

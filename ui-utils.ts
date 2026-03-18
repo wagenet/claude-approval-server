@@ -40,6 +40,115 @@ export function langFromPath(path: string): string {
   return map[ext] ?? "plaintext";
 }
 
+export interface EmbeddedCode {
+  header: string;
+  body: string;
+  lang: string;
+}
+
+/**
+ * Split a bash command on top-level pipes only (not || and not pipes inside
+ * quotes or $(...) subshells). Returns null when there is only one segment.
+ */
+export function splitPipedCommand(cmd: string): string[] | null {
+  const segments: string[] = [];
+  let current = "";
+  let depth = 0;
+  let inSingle = false;
+  let inDouble = false;
+
+  for (let i = 0; i < cmd.length; i++) {
+    const ch = cmd[i];
+    const next = i + 1 < cmd.length ? cmd[i + 1] : "";
+
+    if (inSingle) {
+      current += ch;
+      if (ch === "'") inSingle = false;
+    } else if (inDouble) {
+      if (ch === '"') {
+        inDouble = false;
+        current += ch;
+      } else if (ch === "$" && next === "(") {
+        depth++;
+        current += ch + next;
+        i++;
+      } else if (ch === ")" && depth > 0) {
+        depth--;
+        current += ch;
+      } else {
+        current += ch;
+      }
+    } else if (ch === "'") {
+      inSingle = true;
+      current += ch;
+    } else if (ch === '"') {
+      inDouble = true;
+      current += ch;
+    } else if (ch === "$" && next === "(") {
+      depth++;
+      current += ch + next;
+      i++;
+    } else if (ch === ")" && depth > 0) {
+      depth--;
+      current += ch;
+    } else if (ch === "|" && depth === 0) {
+      if (next === "|") {
+        // || operator — do not split
+        current += ch + next;
+        i++;
+      } else {
+        segments.push(current);
+        current = "";
+      }
+    } else {
+      current += ch;
+    }
+  }
+  segments.push(current);
+
+  const trimmed = segments.map((s) => s.trim()).filter((s) => s.length > 0);
+  return trimmed.length > 1 ? trimmed : null;
+}
+
+/**
+ * Detect a heredoc pattern: `cat > file << 'EOF'\n<body>\nEOF`
+ * Returns the shell header line, the body, and the inferred language from the
+ * file extension in the header. Returns null if not a heredoc.
+ */
+export function parseHeredoc(cmd: string): EmbeddedCode | null {
+  const match = cmd.match(/^(.*?<<\s*['"]?(\w+)['"]?)\s*\n([\s\S]*?)\n\2\s*$/);
+  if (!match) return null;
+  const header = match[1].trim();
+  const body = match[3];
+  // Find the last filename-like token in the header for language detection
+  const fileTokens = header.match(/\S+\.\w+/g);
+  const lang = fileTokens ? langFromPath(fileTokens[fileTokens.length - 1]) : "plaintext";
+  return { header, body, lang };
+}
+
+/** Map an interpreter name to a highlight.js language string. */
+export function langFromInterpreter(name: string): string {
+  if (name.startsWith("python")) return "python";
+  if (name === "node") return "javascript";
+  if (name === "ruby") return "ruby";
+  if (name === "perl") return "perl";
+  return "bash";
+}
+
+/**
+ * Detect an interpreter -c invocation: `python3 -c '...'` or `node -c "..."`.
+ * Returns the shell header (everything up to and including -c), the inline
+ * body, and the inferred language. Returns null if not matched.
+ */
+export function parseInterpreterCall(cmd: string): EmbeddedCode | null {
+  const match = cmd.match(/^((python3?|node|ruby|perl|bash|sh)\b.*?-c)\s+(['"])([\s\S]*?)\3\s*$/);
+  if (!match) return null;
+  const header = match[1].trim();
+  const interpreterName = match[2];
+  const body = match[4];
+  return { header, body, lang: langFromInterpreter(interpreterName) };
+}
+
 import type { TerminalInfo } from "./ui-types";
 
 export function getTerminalIcon(ti: TerminalInfo | undefined): string {
