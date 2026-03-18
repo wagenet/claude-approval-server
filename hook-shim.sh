@@ -13,7 +13,7 @@ TERMINAL_INFO=$(jq -n \
   --arg ghostty_resources_dir "${GHOSTTY_RESOURCES_DIR:-}" \
   '{term_program: $term_program, iterm_session_id: $iterm_session_id, ghostty_resources_dir: $ghostty_resources_dir}')
 
-ENRICHED=$(echo "$PAYLOAD" | jq --argjson ti "$TERMINAL_INFO" '. + {terminal_info: $ti}')
+ENRICHED=$(echo "$PAYLOAD" | jq --argjson ti "$TERMINAL_INFO" --arg cwd "${PWD:-}" '. + {terminal_info: $ti} | if (.cwd == null or .cwd == "") then . + {cwd: $cwd} else . end')
 
 curl -sS --max-time 610 \
   -X POST -H 'Content-Type: application/json' \
