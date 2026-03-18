@@ -95,7 +95,7 @@ function openPlanModal(item: QueueItem, decide: (decision: string) => void) {
 
   const ti = item.terminal_info;
   const hasFocusTarget = !!(ti?.iterm_session_id || ti?.ghostty_resources_dir || ti?.term_program);
-  focusBtn.style.display = hasFocusTarget ? "" : "none";
+  focusBtn.classList.toggle("hidden", !hasFocusTarget);
   focusBtn.onclick = () => fetch(`/focus/${item.id}`, { method: "POST" });
   focusBtn.innerHTML = getTerminalIcon(ti) + "Focus";
 
@@ -458,12 +458,12 @@ function makeCard(item: QueueItem): HTMLElement {
       <button class="btn-x" aria-label="Dismiss">✕</button>
     </div>
     <div class="code-block-wrapper"></div>
-    <div class="explanation" style="display:none"></div>
+    <div class="explanation"></div>
     <div class="actions">
       <button class="btn-allow">${isPlan ? "Review Plan…" : "Allow"}</button>
       <button class="btn-deny">Deny</button>
       <button class="btn-explain">Explain</button>
-      <button class="btn-focus"${hasFocusTarget ? "" : ' style="display:none"'}>Focus</button>
+      <button class="btn-focus${hasFocusTarget ? "" : " hidden"}">Focus</button>
     </div>
   `;
 
@@ -592,10 +592,10 @@ function makeIdleCard(session: IdleSession): HTMLElement {
       <span class="session">${sid}</span>
     </div>
     <div class="idle-time">${when}</div>
-    <div class="idle-output" style="display:block">Loading…</div>
+    <div class="idle-output">Loading…</div>
     <div class="actions">
       <button class="btn-dismiss">Dismiss</button>
-      <button class="btn-focus"${hasFocusTarget ? "" : ' style="display:none"'}>Focus</button>
+      <button class="btn-focus${hasFocusTarget ? "" : " hidden"}">Focus</button>
     </div>
   `;
 

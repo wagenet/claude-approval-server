@@ -129,13 +129,13 @@
       }
 
       #queue {
-        display: flex;
+        display: none;
         flex-direction: column;
         gap: 1rem;
       }
 
       #idle-list {
-        display: flex;
+        display: none;
         flex-direction: column;
         gap: 1rem;
       }
@@ -566,7 +566,6 @@
       }
 
       .idle-output {
-        display: none;
         font-size: 0.8rem;
         color: var(--text-muted);
         line-height: 1.55;
@@ -679,12 +678,32 @@
       }
 
       .explanation {
+        display: none;
         font-size: 0.82rem;
         color: var(--text-muted);
         line-height: 1.55;
         border-left: 2px solid var(--border);
         padding: 0.4rem 0.75rem;
         margin-bottom: 1rem;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      #notif-banner {
+        display: none;
+      }
+
+      #plan-modal-close {
+        margin-left: auto;
+      }
+
+      .settings-note {
+        display: block;
+        opacity: 0.6;
+        font-size: 0.8em;
+        margin-top: 2px;
       }
 
       /* Settings modal */
@@ -859,7 +878,7 @@
     </style>
   </head>
   <body>
-    <div id="notif-banner" style="display: none"></div>
+    <div id="notif-banner"></div>
     <div id="plan-modal">
       <div id="plan-modal-inner">
         <div id="plan-modal-header">
@@ -870,8 +889,8 @@
         <div id="plan-modal-footer">
           <button class="btn-approve-plan" id="plan-modal-approve">Approve Plan</button>
           <button class="btn-deny" id="plan-modal-deny">Deny</button>
-          <button class="btn-focus" id="plan-modal-focus" style="display: none">Focus</button>
-          <button class="btn-dismiss" id="plan-modal-close" style="margin-left: auto">Close</button>
+          <button class="btn-focus hidden" id="plan-modal-focus">Focus</button>
+          <button class="btn-dismiss" id="plan-modal-close">Close</button>
         </div>
       </div>
     </div>
@@ -897,9 +916,7 @@
           <label class="settings-label-inline">
             <input type="checkbox" id="setting-require-interaction" />
             Keep approval notifications until dismissed
-            <small style="display: block; opacity: 0.6; font-size: 0.8em; margin-top: 2px"
-              >Not supported on macOS</small
-            >
+            <small class="settings-note">Not supported on macOS</small>
           </label>
         </div>
         <div id="settings-footer">
@@ -916,12 +933,12 @@
       <div class="column">
         <h1><span class="dot"></span> Approval Queue</h1>
         <div id="idle">No pending requests</div>
-        <div id="queue" style="display: none"></div>
+        <div id="queue"></div>
       </div>
       <div class="column">
         <h1><span class="dot dot-idle"></span> Idle Sessions</h1>
         <div id="idle-empty">No idle sessions</div>
-        <div id="idle-list" style="display: none"></div>
+        <div id="idle-list"></div>
       </div>
     </div>
   </body>
