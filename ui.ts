@@ -276,7 +276,12 @@ function makeCodeBlock(item: QueueItem): { pre: HTMLElement; filePath: string } 
     code.className = "language-bash";
     code.textContent = split
       ? split.segments
-          .map((seg, i) => (i === 0 ? seg : `  ${split.seps[i - 1]} ${seg}`))
+          .map((seg, i) => {
+            if (i === 0) return seg;
+            const sep = split.seps[i - 1];
+            const indent = sep === "|" ? "      " : "  ";
+            return `${indent}${sep} ${seg}`;
+          })
           .join(" \\\n")
       : rawCmd;
   } else if (item.tool_name === "Write") {
