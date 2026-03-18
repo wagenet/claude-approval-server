@@ -6,6 +6,8 @@ import type { IdleSession, QueueItem, AskQuestion } from "./ui-types";
 import {
   asString,
   badgeClass,
+  formatToolName,
+  parseMcpToolName,
   shortCwd,
   langFromPath,
   getTerminalIcon,
@@ -246,6 +248,16 @@ function makeCodeBlock(item: QueueItem): { pre: HTMLElement; filePath: string } 
   } else if (item.tool_name === "WebSearch") {
     code.className = "language-plaintext";
     code.textContent = asString(item.tool_input?.query);
+  } else if (item.tool_name && parseMcpToolName(item.tool_name)) {
+    const query = item.tool_input?.query;
+    if (typeof query === "string") {
+      code.className = "language-plaintext";
+      code.textContent = query;
+    } else {
+      const display = item.tool_input ? parseEmbeddedJson(item.tool_input) : {};
+      code.className = "language-json";
+      code.textContent = JSON.stringify(display, null, 2);
+    }
   } else if (item.tool_name === "ExitPlanMode") {
     const prompts = item.tool_input?.allowedPrompts;
     code.className = "language-plaintext";
@@ -382,7 +394,7 @@ function makeCard(item: QueueItem): HTMLElement {
 
   card.innerHTML = `
     <div class="card-header">
-      <span class="badge ${badgeClass(item.tool_name)}">${item.tool_name ?? "unknown"}</span>
+      <span class="badge ${badgeClass(item.tool_name)}">${formatToolName(item.tool_name)}</span>
       ${cwdShort ? `<span class="cwd" title="${cwdFull}">${cwdShort}</span>` : ""}
       <span class="timer" data-enqueued="${item.enqueuedAt}">${elapsed()}</span>
       <span class="session">${sessionId}</span>

@@ -1,6 +1,8 @@
 import { test, expect, describe } from "bun:test";
 import {
   badgeClass,
+  parseMcpToolName,
+  formatToolName,
   shortCwd,
   langFromPath,
   splitPipedCommand,
@@ -9,12 +11,48 @@ import {
   langFromInterpreter,
 } from "./ui-utils";
 
+describe("parseMcpToolName", () => {
+  test("standard MCP tool", () => {
+    expect(parseMcpToolName("MCP__UNBLOCKED__UNBLOCKED_CONTEXT_ENGINE")).toEqual({
+      server: "unblocked",
+      tool: "unblocked_context_engine",
+    });
+  });
+  test("lowercases server and tool", () => {
+    expect(parseMcpToolName("MCP__EMBER__SEARCH_EMBER_DOCS")).toEqual({
+      server: "ember",
+      tool: "search_ember_docs",
+    });
+  });
+  test("returns null for non-MCP tool", () => {
+    expect(parseMcpToolName("Bash")).toBeNull();
+  });
+  test("returns null for incomplete prefix", () => {
+    expect(parseMcpToolName("MCP__ONLY_TWO")).toBeNull();
+  });
+});
+
+describe("formatToolName", () => {
+  test("MCP tool formatted as server / tool", () => {
+    expect(formatToolName("MCP__UNBLOCKED__UNBLOCKED_CONTEXT_ENGINE")).toBe(
+      "unblocked / unblocked_context_engine",
+    );
+  });
+  test("regular tool unchanged", () => {
+    expect(formatToolName("Bash")).toBe("Bash");
+  });
+  test("undefined returns 'unknown'", () => {
+    expect(formatToolName(undefined)).toBe("unknown");
+  });
+});
+
 describe("badgeClass", () => {
   test("Bash", () => expect(badgeClass("Bash")).toBe("badge-bash"));
   test("Write", () => expect(badgeClass("Write")).toBe("badge-write"));
   test("Edit", () => expect(badgeClass("Edit")).toBe("badge-edit"));
   test("ExitPlanMode", () => expect(badgeClass("ExitPlanMode")).toBe("badge-plan"));
   test("EnterPlanMode", () => expect(badgeClass("EnterPlanMode")).toBe("badge-plan"));
+  test("MCP tool", () => expect(badgeClass("MCP__UNBLOCKED__UNBLOCKED_CONTEXT_ENGINE")).toBe("badge-mcp"));
   test("unknown defaults", () => expect(badgeClass("Glob")).toBe("badge-default"));
   test("undefined defaults", () => expect(badgeClass(undefined)).toBe("badge-default"));
 });

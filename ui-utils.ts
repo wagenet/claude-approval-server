@@ -2,11 +2,28 @@ export function asString(val: unknown, fallback = ""): string {
   return typeof val === "string" ? val : fallback;
 }
 
+export function parseMcpToolName(name: string): { server: string; tool: string } | null {
+  const parts = name.split("__");
+  if (parts.length < 3 || parts[0] !== "MCP") return null;
+  return {
+    server: parts[1].toLowerCase(),
+    tool: parts.slice(2).join("__").toLowerCase(),
+  };
+}
+
+export function formatToolName(name: string | undefined): string {
+  if (!name) return "unknown";
+  const mcp = parseMcpToolName(name);
+  if (mcp) return `${mcp.server} / ${mcp.tool}`;
+  return name;
+}
+
 export function badgeClass(toolName: string | undefined): string {
   if (toolName === "Bash") return "badge-bash";
   if (toolName === "Write") return "badge-write";
   if (toolName === "Edit") return "badge-edit";
   if (toolName === "ExitPlanMode" || toolName === "EnterPlanMode") return "badge-plan";
+  if (toolName && parseMcpToolName(toolName)) return "badge-mcp";
   return "badge-default";
 }
 
