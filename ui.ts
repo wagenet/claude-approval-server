@@ -3,7 +3,7 @@ import * as Diff from 'diff'
 import { marked } from 'marked'
 import 'highlight.js/styles/github-dark.min.css'
 import type { StoppedSession, QueueItem, AskOption, AskQuestion } from './ui-types'
-import { badgeClass, shortCwd, langFromPath } from './ui-utils'
+import { badgeClass, shortCwd, langFromPath, getTerminalIcon } from './ui-utils'
 
 const POLL_MS = 1000
 let AUTO_DENY_MS = 10 * 60 * 1000 // fallback until /config responds
@@ -49,6 +49,7 @@ function openPlanModal(item: QueueItem, decide: (decision: string) => void) {
   const hasFocusTarget = !!(ti?.iterm_session_id || ti?.ghostty_resources_dir || ti?.term_program)
   focusBtn.style.display = hasFocusTarget ? '' : 'none'
   focusBtn.onclick = () => fetch(`/focus/${item.id}`, { method: 'POST' })
+  focusBtn.innerHTML = getTerminalIcon(ti) + 'Focus'
 
   closeBtn.onclick = () => {
     modal.classList.remove('open')
@@ -256,7 +257,7 @@ function makeAskUserQuestionCard(item: QueueItem): HTMLElement {
 
   const focusBtn = document.createElement('button')
   focusBtn.className = 'btn-allow'
-  focusBtn.textContent = 'Focus'
+  focusBtn.innerHTML = getTerminalIcon(item.terminal_info) + 'Focus'
   focusBtn.addEventListener('click', () => fetch(`/focus/${item.id}`, { method: 'POST' }))
 
   const dismissBtn = document.createElement('button')
@@ -377,6 +378,7 @@ function makeCard(item: QueueItem): HTMLElement {
   })
 
   const focusBtn = card.querySelector<HTMLButtonElement>('.btn-focus')!
+  focusBtn.innerHTML = getTerminalIcon(ti) + 'Focus'
   focusBtn.addEventListener('click', async () => {
     await fetch(`/focus/${item.id}`, { method: 'POST' })
   })
@@ -430,7 +432,9 @@ function makeStoppedCard(session: StoppedSession): HTMLElement {
     updateStoppedIdle()
   })
 
-  card.querySelector<HTMLButtonElement>('.btn-focus')!.addEventListener('click', async () => {
+  const stoppedFocusBtn = card.querySelector<HTMLButtonElement>('.btn-focus')!
+  stoppedFocusBtn.innerHTML = getTerminalIcon(session.terminal_info) + 'Focus'
+  stoppedFocusBtn.addEventListener('click', async () => {
     await fetch(`/focus-stopped/${session.sessionId}`, { method: 'POST' })
   })
 
