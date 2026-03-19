@@ -79,6 +79,13 @@ describe("buildFocusScript", () => {
     expect(script).toBeNull();
   });
 
+  test("iTerm2 GUID with injection chars returns null", () => {
+    const script = buildFocusScript({
+      terminal_info: { iterm_session_id: 'prefix:ABCD" & do shell script "evil' },
+    });
+    expect(script).toBeNull();
+  });
+
   test("Ghostty without cwd returns simple activate", () => {
     const script = buildFocusScript({
       terminal_info: { ghostty_resources_dir: "/opt/ghostty" },
@@ -113,6 +120,23 @@ describe("buildFocusScript", () => {
     });
     expect(script).toContain("Visual Studio Code");
     expect(script).toContain("/Users/me/project");
+  });
+
+  test("Ghostty cwd with newline strips newline (prevents AppleScript injection)", () => {
+    const script = buildFocusScript({
+      terminal_info: { ghostty_resources_dir: "/opt/ghostty" },
+      cwd: '/home/user/proj\nend tell\ndo shell script "evil"',
+    });
+    // Newline stripped so the injected AppleScript statements are not on separate lines
+    expect(script).not.toContain("\nend tell\ndo shell script");
+  });
+
+  test("VSCode cwd with newline strips newline (prevents AppleScript injection)", () => {
+    const script = buildFocusScript({
+      terminal_info: { term_program: "vscode" },
+      cwd: '/Users/me/project\ndo shell script "evil"',
+    });
+    expect(script).not.toContain("\ndo shell script");
   });
 
   test("unknown terminal returns null", () => {

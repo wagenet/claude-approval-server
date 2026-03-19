@@ -77,6 +77,8 @@ export function buildFocusScript(payload: Record<string, unknown>): string | nul
   if (info.iterm_session_id) {
     const guid = info.iterm_session_id.split(":")[1];
     if (!guid) return null;
+    // SAFETY: Validate GUID is hex+hyphens only before interpolating into AppleScript
+    if (!/^[0-9A-Fa-f-]+$/.test(guid)) return null;
     return `
 tell application "iTerm2"
   repeat with w in windows
@@ -95,7 +97,7 @@ end tell`;
 
   if (info.ghostty_resources_dir || termProgram === "ghostty") {
     if (!cwd) return 'tell application "Ghostty" to activate';
-    const escapedCwd = cwd.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    const escapedCwd = cwd.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "");
     return `
 tell application "Ghostty"
   repeat with w in windows
@@ -118,7 +120,7 @@ end tell`;
   if (termProgram === "vscode") {
     if (!cwd) return 'tell application "Code" to activate';
     const root = findGitRoot(cwd);
-    const escaped = root.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    const escaped = root.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "");
     return `do shell script "open -a 'Visual Studio Code' \\"${escaped}\\""`;
   }
 
