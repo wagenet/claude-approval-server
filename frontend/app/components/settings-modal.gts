@@ -8,22 +8,30 @@ import type AppSettingsService from '../services/app-settings';
 export default class SettingsModal extends Component {
   @service declare appSettings: AppSettingsService;
 
-  @tracked localTheme: 'dark' | 'light' = 'dark';
-  @tracked localNotifEnabled = true;
-  @tracked localRequireInteraction = true;
+  @tracked private _localTheme: 'dark' | 'light' | undefined;
+  @tracked private _localNotifEnabled: boolean | undefined;
+  @tracked private _localRequireInteraction: boolean | undefined;
 
   get isOpen() {
     return this.appSettings.isOpen;
   }
 
-  openModal = () => {
-    this.localTheme = this.appSettings.theme;
-    this.localNotifEnabled = this.appSettings.notifEnabled;
-    this.localRequireInteraction = this.appSettings.notifRequireInteraction;
-    this.appSettings.open();
-  };
+  get localTheme() {
+    return this._localTheme ?? this.appSettings.theme;
+  }
+
+  get localNotifEnabled() {
+    return this._localNotifEnabled ?? this.appSettings.notifEnabled;
+  }
+
+  get localRequireInteraction() {
+    return this._localRequireInteraction ?? this.appSettings.notifRequireInteraction;
+  }
 
   close = () => {
+    this._localTheme = undefined;
+    this._localNotifEnabled = undefined;
+    this._localRequireInteraction = undefined;
     this.appSettings.close();
   };
 
@@ -33,15 +41,15 @@ export default class SettingsModal extends Component {
 
   setTheme = (e: Event) => {
     const val = (e.target as HTMLSelectElement).value;
-    this.localTheme = val === 'light' ? 'light' : 'dark';
+    this._localTheme = val === 'light' ? 'light' : 'dark';
   };
 
   setNotifEnabled = (e: Event) => {
-    this.localNotifEnabled = (e.target as HTMLInputElement).checked;
+    this._localNotifEnabled = (e.target as HTMLInputElement).checked;
   };
 
   setRequireInteraction = (e: Event) => {
-    this.localRequireInteraction = (e.target as HTMLInputElement).checked;
+    this._localRequireInteraction = (e.target as HTMLInputElement).checked;
   };
 
   save = async () => {

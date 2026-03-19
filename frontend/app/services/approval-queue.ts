@@ -9,8 +9,11 @@ export default class ApprovalQueueService extends Service {
 
   @tracked items: QueueItem[] = [];
   @tracked idleSessions: IdleSession[] = [];
-  @tracked autoDenyMs = 600000;
   @tracked planItem: QueueItem | null = null;
+
+  get autoDenyMs() {
+    return this.appSettings.autoDenyMs;
+  }
 
   readonly notifiedIds = new Set<string>();
   #interval?: ReturnType<typeof setInterval>;
@@ -20,14 +23,6 @@ export default class ApprovalQueueService extends Service {
       void Notification.requestPermission();
     }
     await this.appSettings.load();
-    try {
-      const cfg = (await fetch('/config').then((r) => r.json())) as {
-        autoDenyMs?: number;
-      };
-      this.autoDenyMs = cfg.autoDenyMs ?? 600000;
-    } catch {
-      // ignore
-    }
     void this.#poll();
     this.#interval = setInterval(() => {
       void this.#poll();

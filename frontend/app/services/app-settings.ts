@@ -5,6 +5,7 @@ export default class AppSettingsService extends Service {
   @tracked theme: 'dark' | 'light' = 'dark';
   @tracked notifEnabled = true;
   @tracked notifRequireInteraction = true;
+  @tracked autoDenyMs = 600000;
   @tracked isOpen = false;
 
   async load() {
@@ -13,10 +14,12 @@ export default class AppSettingsService extends Service {
         theme?: string;
         notifEnabled?: boolean;
         notifRequireInteraction?: boolean;
+        autoDenyMs?: number;
       };
       this.theme = cfg.theme === 'light' ? 'light' : 'dark';
       this.notifEnabled = cfg.notifEnabled ?? true;
       this.notifRequireInteraction = cfg.notifRequireInteraction ?? true;
+      this.autoDenyMs = cfg.autoDenyMs ?? 600000;
       document.documentElement.setAttribute('data-theme', this.theme);
     } catch {
       // ignore, use defaults
