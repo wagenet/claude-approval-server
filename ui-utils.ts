@@ -68,7 +68,7 @@ export interface EmbeddedCode {
   lang: string;
 }
 
-export type CommandSplit = { segments: string[]; seps: ("|" | "&&")[] };
+export type CommandSplit = { segments: string[]; seps: ("|" | "&&" | ";")[] };
 
 /**
  * Split a bash command on top-level `|` and `&&` operators (not `||`, not `&`,
@@ -122,6 +122,16 @@ export function splitCommand(cmd: string): CommandSplit | null {
       seps.push("&&");
       current = "";
       i++; // skip second &
+    } else if (ch === ";" && depth === 0) {
+      if (next === ";") {
+        // ;; (case pattern end) — do not split
+        current += ch + next;
+        i++;
+      } else {
+        segments.push(current.trim());
+        seps.push(";");
+        current = "";
+      }
     } else if (ch === "|" && depth === 0) {
       if (next === "|") {
         // || operator — do not split
@@ -192,7 +202,9 @@ export function langFromInterpreter(name: string): string {
  * body, and the inferred language. Returns null if not matched.
  */
 export function parseInterpreterCall(cmd: string): EmbeddedCode | null {
-  const match = cmd.match(/^([\s\S]*?(python3?|node|ruby|perl|bash|sh)\b.*?-[ce])\s+(['"])([\s\S]*?)\3[\s\S]*$/);
+  const match = cmd.match(
+    /^([\s\S]*?(python3?|node|ruby|perl|bash|sh)\b.*?-[ce])\s+(['"])([\s\S]*?)\3[\s\S]*$/,
+  );
   if (!match) return null;
   const header = match[1].trim();
   const interpreterName = match[2];

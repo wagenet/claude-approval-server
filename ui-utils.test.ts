@@ -179,6 +179,18 @@ describe("splitCommand", () => {
       seps: ["&&"],
     });
   });
+  test("semicolon splits", () => {
+    expect(splitCommand("cd /tmp; ls; echo done")).toEqual({
+      segments: ["cd /tmp", "ls", "echo done"],
+      seps: [";", ";"],
+    });
+  });
+  test(";; not split", () => {
+    expect(splitCommand("case $x in a) echo a;; b) echo b;; esac")).toBeNull();
+  });
+  test("; inside quotes not split", () => {
+    expect(splitCommand('echo "a; b"')).toBeNull();
+  });
 });
 
 describe("parseHeredoc", () => {
@@ -284,7 +296,9 @@ describe("parseInterpreterCall", () => {
     expect(parseInterpreterCall("python3 script.py")).toBeNull();
   });
   test("trailing shell redirection and pipe", () => {
-    const result = parseInterpreterCall(`python3 -c "import json\nprint(json.dumps({}))" 2>&1 | head -30`);
+    const result = parseInterpreterCall(
+      `python3 -c "import json\nprint(json.dumps({}))" 2>&1 | head -30`,
+    );
     expect(result).not.toBeNull();
     expect(result!.lang).toBe("python");
     expect(result!.body).toBe("import json\nprint(json.dumps({}))");
