@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import type { PendingEntry, IdleSession } from "./types";
 import { saveSettings, type Settings } from "./settings";
-import { AUTO_DENY_TIMEOUT_MS, IDLE_SESSION_TTL_MS } from "./state";
+import { AUTO_DENY_TIMEOUT_MS, IDLE_SESSION_TTL_MS, LOG_MAX, type LogEntry } from "./state";
 import {
   asString,
   stableStringify,
@@ -29,6 +29,7 @@ export function createRoutes(
   pending: Map<string, PendingEntry>,
   idleSessions: Map<string, IdleSession>,
   settings: Settings,
+  log: LogEntry[],
 ) {
   return {
     "/config": {
@@ -289,6 +290,12 @@ export function createRoutes(
       },
     },
 
+    "/log": {
+      GET() {
+        return Response.json(log);
+      },
+    },
+
     "/pending": {
       async POST(req: Request) {
         // SAFETY: /pending body is an arbitrary JSON object from the Claude PermissionRequest hook
@@ -333,6 +340,13 @@ export function createRoutes(
           });
         }
         const toolName = asString(payload.tool_name, "unknown");
+        log.push({
+          id,
+          timestamp: Date.now(),
+          tool_name: toolName,
+          tool_input: payload.tool_input,
+        });
+        if (log.length > LOG_MAX) log.splice(0, log.length - LOG_MAX);
         const summary = JSON.stringify(payload.tool_input ?? "");
         console.log(`[enqueue] ${toolName} | ${summary.slice(0, 120)} | id=${id}`);
 

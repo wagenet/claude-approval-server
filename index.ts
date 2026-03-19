@@ -1,5 +1,5 @@
 import { createRoutes } from "./routes";
-import { pendingRequests, idleSessions } from "./state";
+import { pendingRequests, idleSessions, payloadLog } from "./state";
 import { settings } from "./settings";
 import ui from "./ui.html";
 
@@ -10,7 +10,7 @@ Bun.serve({
   idleTimeout: 0,
   routes: {
     "/": ui,
-    ...createRoutes(pendingRequests, idleSessions, settings),
+    ...createRoutes(pendingRequests, idleSessions, settings, payloadLog),
   },
 });
 

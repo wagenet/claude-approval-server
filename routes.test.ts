@@ -11,11 +11,12 @@ const testSettings: Settings = {
 function makeServer() {
   const pending = new Map<string, PendingEntry>();
   const idle = new Map<string, IdleSession>();
+  const log: import("./state").LogEntry[] = [];
   const server = Bun.serve({
     port: 0,
-    routes: createRoutes(pending, idle, testSettings),
+    routes: createRoutes(pending, idle, testSettings, log),
   });
-  return { server, pending, idle };
+  return { server, pending, idle, log };
 }
 
 describe("GET /health", () => {
