@@ -139,7 +139,7 @@ export function createRoutes(
         entry.explaining = true;
         try {
           const prompt = buildExplainPrompt(entry.payload);
-          const proc = Bun.spawn(["claude", "-p", prompt, "--model", "haiku"], {
+          const proc = Bun.spawn(["claude", "-p", prompt, "--model", "haiku", "--effort", "low"], {
             stdout: "pipe",
             stderr: "pipe",
             env: { ...process.env, APPROVAL_SERVER_EXPLAIN: "1" },
