@@ -255,6 +255,28 @@ describe("parseInterpreterCall", () => {
     expect(result!.header).toBe("python3 -u -c");
     expect(result!.body).toBe("print(1)");
   });
+  test("node -e", () => {
+    const result = parseInterpreterCall(`node -e "console.log(1)"`);
+    expect(result).not.toBeNull();
+    expect(result!.lang).toBe("javascript");
+    expect(result!.header).toBe("node -e");
+    expect(result!.body).toBe("console.log(1)");
+  });
+  test("cd && node -e compound command", () => {
+    const result = parseInterpreterCall(`cd /path && node -e "console.log('hi')"`);
+    expect(result).not.toBeNull();
+    expect(result!.header).toBe("cd /path && node -e");
+    expect(result!.body).toBe("console.log('hi')");
+    expect(result!.lang).toBe("javascript");
+  });
+  test("multiline node -e with cd prefix", () => {
+    const result = parseInterpreterCall(
+      `cd /path \\\n  && node -e "import('./x.js').then(m => {\n  console.log(m);\n})"`,
+    );
+    expect(result).not.toBeNull();
+    expect(result!.lang).toBe("javascript");
+    expect(result!.body).toBe("import('./x.js').then(m => {\n  console.log(m);\n})");
+  });
   test("non-interpreter command returns null", () => {
     expect(parseInterpreterCall("ls -la")).toBeNull();
   });

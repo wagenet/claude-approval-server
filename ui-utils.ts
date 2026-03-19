@@ -186,12 +186,13 @@ export function langFromInterpreter(name: string): string {
 }
 
 /**
- * Detect an interpreter -c invocation: `python3 -c '...'` or `node -c "..."`.
- * Returns the shell header (everything up to and including -c), the inline
+ * Detect an interpreter -c/-e invocation, optionally preceded by other shell
+ * commands: `python3 -c '...'`, `node -e "..."`, `cd /path && node -e "..."`.
+ * Returns the shell header (everything up to and including -c/-e), the inline
  * body, and the inferred language. Returns null if not matched.
  */
 export function parseInterpreterCall(cmd: string): EmbeddedCode | null {
-  const match = cmd.match(/^((python3?|node|ruby|perl|bash|sh)\b.*?-c)\s+(['"])([\s\S]*?)\3\s*$/);
+  const match = cmd.match(/^([\s\S]*?(python3?|node|ruby|perl|bash|sh)\b.*?-[ce])\s+(['"])([\s\S]*?)\3\s*$/);
   if (!match) return null;
   const header = match[1].trim();
   const interpreterName = match[2];
