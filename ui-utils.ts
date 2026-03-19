@@ -46,6 +46,8 @@ export function langFromPath(path: string): string {
     ts: "typescript",
     tsx: "typescript",
     js: "javascript",
+    mjs: "javascript",
+    cjs: "javascript",
     jsx: "javascript",
     json: "json",
     py: "python",
@@ -172,10 +174,17 @@ export function splitPipedCommand(cmd: string): string[] | null {
  * file extension in the header. Returns null if not a heredoc.
  */
 export function parseHeredoc(cmd: string): EmbeddedCode | null {
-  const match = cmd.match(/^(.*?<<\s*['"]?(\w+)['"]?)\s*\n([\s\S]*?)\n\2\s*$/);
+  const match = cmd.match(
+    /^(.*?<<\s*['"]?(\w+)['"]?)\s*\n([\s\S]*?)\n[ \t]*(?:;[ \t]*)?\2[ \t]*(?:\n([\s\S]+?))?\s*$/,
+  );
   if (!match) return null;
-  const header = match[1].trim();
-  const body = match[3];
+  const headerLine = match[1].trim();
+  const trailing = match[4]?.trim();
+  const header = trailing ? `${headerLine}\n${trailing}` : headerLine;
+  // Normalize bash-style line-continuation artifacts: ` \` + newline + `  ; ` → newline.
+  // Claude sometimes formats heredoc bodies with shell continuation syntax, leaving these
+  // sequences that are meaningless inside a heredoc.
+  const body = match[3].replace(/ \\\n[ \t]*;[ \t]*/g, "\n").replace(/ *\\[ \t]*$/, "");
   // Find the last filename-like token in the header for language detection
   const fileTokens = header.match(/\S+\.\w+/g);
   let lang: string;

@@ -235,6 +235,26 @@ describe("parseHeredoc", () => {
     expect(result).not.toBeNull();
     expect(result!.lang).toBe("javascript");
   });
+  test("heredoc with trailing command appends it to header", () => {
+    const cmd =
+      "cat > /tmp/script.mjs << 'SCRIPT'\nimport fs from 'fs';\nfs.writeFileSync('/tmp/out', 'hi');\nSCRIPT\nnode /tmp/script.mjs";
+    const result = parseHeredoc(cmd);
+    expect(result).not.toBeNull();
+    expect(result!.header).toBe("cat > /tmp/script.mjs << 'SCRIPT'\nnode /tmp/script.mjs");
+    expect(result!.body).toBe("import fs from 'fs';\nfs.writeFileSync('/tmp/out', 'hi');");
+    expect(result!.lang).toBe("javascript");
+  });
+  test("heredoc with semicolon-prefixed terminator (bash continuation style)", () => {
+    const cmd =
+      "cat > /tmp/test.mjs << 'SCRIPT'\nimport fs from 'node:fs' \\\n  ; fs.writeFileSync('/tmp/out.txt', 'hello') \\\n  ; SCRIPT\nnode /tmp/test.mjs";
+    const result = parseHeredoc(cmd);
+    expect(result).not.toBeNull();
+    expect(result!.header).toBe("cat > /tmp/test.mjs << 'SCRIPT'\nnode /tmp/test.mjs");
+    expect(result!.body).toBe(
+      "import fs from 'node:fs'\nfs.writeFileSync('/tmp/out.txt', 'hello')",
+    );
+    expect(result!.lang).toBe("javascript");
+  });
 });
 
 describe("parseInterpreterCall", () => {
