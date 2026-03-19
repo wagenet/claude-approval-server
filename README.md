@@ -38,7 +38,7 @@ When a Claude session ends, the `Stop` hook fires. The server records the finish
 
 **Settings:**
 
-Click the ⚙ button in the top-right corner to open Settings. You can choose between dark and light themes, and toggle whether approval notifications stay on screen until dismissed. Settings are saved to `settings.json` and persist across restarts.
+Click the ⚙ button in the top-right corner to open Settings. You can choose between dark and light themes, toggle browser notifications on/off, and toggle whether approval notifications stay on screen until dismissed. Settings are saved to `settings.json` and persist across restarts.
 
 ## Prerequisites
 
