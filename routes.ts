@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import type { PendingEntry, IdleSession } from "./types";
 import { saveSettings, type Settings } from "./settings";
-import { AUTO_DENY_TIMEOUT_MS, IDLE_SESSION_TTL_MS, LOG_MAX, type LogEntry } from "./state";
+import { AUTO_DENY_TIMEOUT_MS, LOG_MAX, type LogEntry } from "./state";
 import {
   asString,
   stableStringify,
@@ -207,13 +207,6 @@ export function createRoutes(
 
     "/idle": {
       GET() {
-        const cutoff = Date.now() - IDLE_SESSION_TTL_MS;
-        for (const [id, session] of idleSessions) {
-          if (session.idleSince < cutoff) {
-            console.log(`[idle-expire] session=${id}`);
-            idleSessions.delete(id);
-          }
-        }
         const items = [...idleSessions.values()].map(
           ({ sessionId, idleSince, transcriptPath, payload, sessionName }) => ({
             sessionId,
@@ -375,7 +368,11 @@ export function createRoutes(
                 } else {
                   controller.enqueue(
                     encoder.encode(
-                      JSON.stringify(decision === "allow" ? allowResponse() : denyResponse()),
+                      JSON.stringify(
+                        decision === "allow"
+                          ? allowResponse()
+                          : denyResponse(decision !== "deny" ? decision : undefined),
+                      ),
                     ),
                   );
                   controller.close();

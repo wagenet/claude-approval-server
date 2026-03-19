@@ -209,6 +209,34 @@ describe("POST /pending + POST /decide/:id", () => {
     await writeRes;
   });
 
+  test("forwards custom deny message to hook response", async () => {
+    const pendingRes = fetch(`http://localhost:${server.port}/pending`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tool_name: "Bash",
+        tool_input: { command: "rm -rf /" },
+        session_id: "sess-deny-msg",
+      }),
+    });
+
+    await Bun.sleep(10);
+    const id = pending.keys().next().value!;
+
+    await fetch(`http://localhost:${server.port}/decide/${id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ decision: "deny", message: "too risky" }),
+    });
+
+    const response = await pendingRes;
+    const body = (await response.json()) as {
+      hookSpecificOutput: { decision: { behavior: string; message: string } };
+    };
+    expect(body.hookSpecificOutput.decision.behavior).toBe("deny");
+    expect(body.hookSpecificOutput.decision.message).toBe("too risky");
+  });
+
   test("404 on unknown id", async () => {
     const res = await fetch(`http://localhost:${server.port}/decide/no-such-id`, {
       method: "POST",
