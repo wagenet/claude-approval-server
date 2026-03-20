@@ -15,10 +15,13 @@ import {
 
 module('parseMcpToolName', function () {
   test('standard MCP tool', function (assert) {
-    assert.deepEqual(parseMcpToolName('MCP__UNBLOCKED__UNBLOCKED_CONTEXT_ENGINE'), {
-      server: 'unblocked',
-      tool: 'unblocked_context_engine',
-    });
+    assert.deepEqual(
+      parseMcpToolName('MCP__UNBLOCKED__UNBLOCKED_CONTEXT_ENGINE'),
+      {
+        server: 'unblocked',
+        tool: 'unblocked_context_engine',
+      }
+    );
   });
 
   test('lowercases server and tool', function (assert) {
@@ -29,10 +32,13 @@ module('parseMcpToolName', function () {
   });
 
   test('lowercase hook payload format', function (assert) {
-    assert.deepEqual(parseMcpToolName('mcp__unblocked__unblocked_context_engine'), {
-      server: 'unblocked',
-      tool: 'unblocked_context_engine',
-    });
+    assert.deepEqual(
+      parseMcpToolName('mcp__unblocked__unblocked_context_engine'),
+      {
+        server: 'unblocked',
+        tool: 'unblocked_context_engine',
+      }
+    );
   });
 
   test('lowercase ember tool', function (assert) {
@@ -55,23 +61,29 @@ module('formatToolName', function () {
   test('MCP tool strips redundant server prefix and replaces underscores', function (assert) {
     assert.strictEqual(
       formatToolName('MCP__UNBLOCKED__UNBLOCKED_CONTEXT_ENGINE'),
-      'unblocked / context engine',
+      'unblocked / context engine'
     );
   });
 
   test('lowercase hook payload format', function (assert) {
     assert.strictEqual(
       formatToolName('mcp__unblocked__unblocked_context_engine'),
-      'unblocked / context engine',
+      'unblocked / context engine'
     );
   });
 
   test('MCP tool without redundant prefix', function (assert) {
-    assert.strictEqual(formatToolName('mcp__unblocked__data_retrieval'), 'unblocked / data retrieval');
+    assert.strictEqual(
+      formatToolName('mcp__unblocked__data_retrieval'),
+      'unblocked / data retrieval'
+    );
   });
 
   test('ember MCP tool strips server prefix', function (assert) {
-    assert.strictEqual(formatToolName('mcp__ember__search_ember_docs'), 'ember / search ember docs');
+    assert.strictEqual(
+      formatToolName('mcp__ember__search_ember_docs'),
+      'ember / search ember docs'
+    );
   });
 
   test('PascalCase tool split into words', function (assert) {
@@ -109,11 +121,17 @@ module('badgeClass', function () {
   });
 
   test('MCP tool uppercase', function (assert) {
-    assert.strictEqual(badgeClass('MCP__UNBLOCKED__UNBLOCKED_CONTEXT_ENGINE'), 'badge-mcp');
+    assert.strictEqual(
+      badgeClass('MCP__UNBLOCKED__UNBLOCKED_CONTEXT_ENGINE'),
+      'badge-mcp'
+    );
   });
 
   test('MCP tool lowercase', function (assert) {
-    assert.strictEqual(badgeClass('mcp__unblocked__unblocked_context_engine'), 'badge-mcp');
+    assert.strictEqual(
+      badgeClass('mcp__unblocked__unblocked_context_engine'),
+      'badge-mcp'
+    );
   });
 
   test('unknown defaults', function (assert) {
@@ -195,7 +213,10 @@ module('splitPipedCommand', function () {
   });
 
   test('two segments', function (assert) {
-    assert.deepEqual(splitPipedCommand('ls -la | head -20'), ['ls -la', 'head -20']);
+    assert.deepEqual(splitPipedCommand('ls -la | head -20'), [
+      'ls -la',
+      'head -20',
+    ]);
   });
 
   test('single command returns null', function (assert) {
@@ -242,10 +263,13 @@ module('splitCommand', function () {
   });
 
   test('mixed && and pipe', function (assert) {
-    assert.deepEqual(splitCommand('cd /path && git show origin/main | head -5'), {
-      segments: ['cd /path', 'git show origin/main', 'head -5'],
-      seps: ['&&', '|'],
-    });
+    assert.deepEqual(
+      splitCommand('cd /path && git show origin/main | head -5'),
+      {
+        segments: ['cd /path', 'git show origin/main', 'head -5'],
+        seps: ['&&', '|'],
+      }
+    );
   });
 
   test('single command returns null', function (assert) {
@@ -283,7 +307,10 @@ module('splitCommand', function () {
   });
 
   test(';; not split', function (assert) {
-    assert.strictEqual(splitCommand('case $x in a) echo a;; b) echo b;; esac'), null);
+    assert.strictEqual(
+      splitCommand('case $x in a) echo a;; b) echo b;; esac'),
+      null
+    );
   });
 
   test('; inside quotes not split', function (assert) {
@@ -330,7 +357,9 @@ module('parseHeredoc', function () {
   });
 
   test('compound command with python3 detects python', function (assert) {
-    const result = parseHeredoc("cd /some/dir && python3 << 'EOF'\nprint('hello')\nEOF");
+    const result = parseHeredoc(
+      "cd /some/dir && python3 << 'EOF'\nprint('hello')\nEOF"
+    );
     assert.ok(result);
     assert.strictEqual(result!.lang, 'python');
   });
@@ -346,8 +375,14 @@ module('parseHeredoc', function () {
       "cat > /tmp/script.mjs << 'SCRIPT'\nimport fs from 'fs';\nfs.writeFileSync('/tmp/out', 'hi');\nSCRIPT\nnode /tmp/script.mjs";
     const result = parseHeredoc(cmd);
     assert.ok(result);
-    assert.strictEqual(result!.header, "cat > /tmp/script.mjs << 'SCRIPT'\nnode /tmp/script.mjs");
-    assert.strictEqual(result!.body, "import fs from 'fs';\nfs.writeFileSync('/tmp/out', 'hi');");
+    assert.strictEqual(
+      result!.header,
+      "cat > /tmp/script.mjs << 'SCRIPT'\nnode /tmp/script.mjs"
+    );
+    assert.strictEqual(
+      result!.body,
+      "import fs from 'fs';\nfs.writeFileSync('/tmp/out', 'hi');"
+    );
     assert.strictEqual(result!.lang, 'javascript');
   });
 
@@ -356,17 +391,20 @@ module('parseHeredoc', function () {
       "cat > /tmp/test.mjs << 'SCRIPT'\nimport fs from 'node:fs' \\\n  ; fs.writeFileSync('/tmp/out.txt', 'hello') \\\n  ; SCRIPT\nnode /tmp/test.mjs";
     const result = parseHeredoc(cmd);
     assert.ok(result);
-    assert.strictEqual(result!.header, "cat > /tmp/test.mjs << 'SCRIPT'\nnode /tmp/test.mjs");
+    assert.strictEqual(
+      result!.header,
+      "cat > /tmp/test.mjs << 'SCRIPT'\nnode /tmp/test.mjs"
+    );
     assert.strictEqual(
       result!.body,
-      "import fs from 'node:fs'\nfs.writeFileSync('/tmp/out.txt', 'hello')",
+      "import fs from 'node:fs'\nfs.writeFileSync('/tmp/out.txt', 'hello')"
     );
     assert.strictEqual(result!.lang, 'javascript');
   });
 });
 
 module('parseInterpreterCall', function () {
-  test("python3 -c single quotes", function (assert) {
+  test('python3 -c single quotes', function (assert) {
     const result = parseInterpreterCall("python3 -c 'print(1)'");
     assert.ok(result);
     assert.strictEqual(result!.lang, 'python');
@@ -375,7 +413,9 @@ module('parseInterpreterCall', function () {
   });
 
   test('python -c double quotes', function (assert) {
-    const result = parseInterpreterCall('python -c "import sys; print(sys.version)"');
+    const result = parseInterpreterCall(
+      'python -c "import sys; print(sys.version)"'
+    );
     assert.ok(result);
     assert.strictEqual(result!.lang, 'python');
     assert.strictEqual(result!.body, 'import sys; print(sys.version)');
@@ -409,7 +449,9 @@ module('parseInterpreterCall', function () {
   });
 
   test('cd && node -e compound command', function (assert) {
-    const result = parseInterpreterCall(`cd /path && node -e "console.log('hi')"`);
+    const result = parseInterpreterCall(
+      `cd /path && node -e "console.log('hi')"`
+    );
     assert.ok(result);
     assert.strictEqual(result!.header, 'cd /path && node -e');
     assert.strictEqual(result!.body, "console.log('hi')");
@@ -418,11 +460,14 @@ module('parseInterpreterCall', function () {
 
   test('multiline node -e with cd prefix', function (assert) {
     const result = parseInterpreterCall(
-      `cd /path \\\n  && node -e "import('./x.js').then(m => {\n  console.log(m);\n})"`,
+      `cd /path \\\n  && node -e "import('./x.js').then(m => {\n  console.log(m);\n})"`
     );
     assert.ok(result);
     assert.strictEqual(result!.lang, 'javascript');
-    assert.strictEqual(result!.body, "import('./x.js').then(m => {\n  console.log(m);\n})");
+    assert.strictEqual(
+      result!.body,
+      "import('./x.js').then(m => {\n  console.log(m);\n})"
+    );
   });
 
   test('non-interpreter command returns null', function (assert) {
@@ -435,7 +480,7 @@ module('parseInterpreterCall', function () {
 
   test('trailing shell redirection and pipe', function (assert) {
     const result = parseInterpreterCall(
-      `python3 -c "import json\nprint(json.dumps({}))" 2>&1 | head -30`,
+      `python3 -c "import json\nprint(json.dumps({}))" 2>&1 | head -30`
     );
     assert.ok(result);
     assert.strictEqual(result!.lang, 'python');
@@ -451,12 +496,17 @@ module('parseGitCommit', function () {
     assert.ok(result);
     assert.strictEqual(result!.subject, 'fix(ui): make filename prominent');
     assert.strictEqual(result!.body, 'Split the path into dir and base.');
-    assert.deepEqual(result!.trailers, ['Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>']);
+    assert.deepEqual(result!.trailers, [
+      'Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>',
+    ]);
   });
 
   test('simplifies preamble', function (assert) {
     const result = parseGitCommit(TYPICAL);
-    assert.strictEqual(result!.preamble, 'git add ui.html ui.ts \\\n  && git commit -m "…"');
+    assert.strictEqual(
+      result!.preamble,
+      'git add ui.html ui.ts \\\n  && git commit -m "…"'
+    );
   });
 
   test('subject only (no body, no trailers)', function (assert) {
@@ -469,7 +519,10 @@ module('parseGitCommit', function () {
   });
 
   test('regular heredoc (no git commit) returns null', function (assert) {
-    assert.strictEqual(parseGitCommit("cat > file.txt <<'EOF'\nhello\nEOF\n"), null);
+    assert.strictEqual(
+      parseGitCommit("cat > file.txt <<'EOF'\nhello\nEOF\n"),
+      null
+    );
   });
 
   test('plain bash command returns null', function (assert) {
@@ -511,7 +564,7 @@ module('parseGitCommit', function () {
     assert.ok(result);
     assert.strictEqual(
       result!.subject,
-      'feat(ui): detect interpreter in heredoc for syntax highlighting',
+      'feat(ui): detect interpreter in heredoc for syntax highlighting'
     );
   });
 });

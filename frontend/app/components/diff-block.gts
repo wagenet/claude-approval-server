@@ -14,7 +14,9 @@ interface DiffLine {
 
 export default class DiffBlock extends Component<Sig> {
   get filePath() {
-    return asString(this.args.item.tool_input?.file_path ?? this.args.item.tool_input?.path);
+    return asString(
+      this.args.item.tool_input?.file_path ?? this.args.item.tool_input?.path
+    );
   }
 
   get fileDir() {
@@ -52,11 +54,15 @@ export default class DiffBlock extends Component<Sig> {
   <template>
     {{#if this.filePath}}
       <div class="file-path">
-        {{#if this.fileDir}}<span class="file-path-dir">{{this.fileDir}}</span>{{/if}}
+        {{#if this.fileDir}}<span
+            class="file-path-dir"
+          >{{this.fileDir}}</span>{{/if}}
         <span class="file-path-base">{{this.fileBase}}</span>
       </div>
     {{/if}}
-    <pre class="diff-block">{{#each this.lines as |line|}}<span class={{line.cssClass}}>{{line.text}}
-</span>{{/each}}</pre>
+    <pre class="diff-block">{{#each this.lines as |line|}}<span
+          class={{line.cssClass}}
+        >{{line.text}}
+        </span>{{/each}}</pre>
   </template>
 }

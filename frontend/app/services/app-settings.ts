@@ -35,7 +35,8 @@ export default class AppSettingsService extends Service {
       this.theme = patch.theme;
       document.documentElement.setAttribute('data-theme', this.theme);
     }
-    if (patch.notifEnabled !== undefined) this.notifEnabled = patch.notifEnabled;
+    if (patch.notifEnabled !== undefined)
+      this.notifEnabled = patch.notifEnabled;
     if (patch.notifRequireInteraction !== undefined)
       this.notifRequireInteraction = patch.notifRequireInteraction;
     try {

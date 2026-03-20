@@ -13,7 +13,5 @@ export default class TerminalIcon extends Component<Sig> {
     return htmlSafe(getTerminalIcon(this.args.terminalInfo));
   }
 
-  <template>
-    {{this.icon}}
-  </template>
+  <template>{{this.icon}}</template>
 }

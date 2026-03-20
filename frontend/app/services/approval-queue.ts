@@ -40,9 +40,13 @@ export default class ApprovalQueueService extends Service {
       for (const item of items) {
         if (!this.notifiedIds.has(item.id)) {
           this.notifiedIds.add(item.id);
-          this.#notify(`Approval: ${item.tool_name ?? 'unknown'}`, shortCwd(item.cwd ?? ''), {
-            requireInteraction: this.appSettings.notifRequireInteraction,
-          });
+          this.#notify(
+            `Approval: ${item.tool_name ?? 'unknown'}`,
+            shortCwd(item.cwd ?? ''),
+            {
+              requireInteraction: this.appSettings.notifRequireInteraction,
+            }
+          );
         }
       }
       this.items = items;
@@ -61,7 +65,8 @@ export default class ApprovalQueueService extends Service {
   }
 
   #notify(title: string, body: string, opts: NotificationOptions = {}) {
-    if (!this.appSettings.notifEnabled || Notification.permission !== 'granted') return;
+    if (!this.appSettings.notifEnabled || Notification.permission !== 'granted')
+      return;
     const n = new Notification(title, { body, ...opts });
     n.onclick = () => {
       window.focus();
@@ -88,7 +93,9 @@ export default class ApprovalQueueService extends Service {
 
   async dismissIdle(sessionId: string) {
     await fetch(`/idle/${sessionId}`, { method: 'DELETE' });
-    this.idleSessions = this.idleSessions.filter((s) => s.sessionId !== sessionId);
+    this.idleSessions = this.idleSessions.filter(
+      (s) => s.sessionId !== sessionId
+    );
   }
 
   openPlanModal(item: QueueItem) {
