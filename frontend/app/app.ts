@@ -1,5 +1,4 @@
 import Application from '@ember/application';
-import 'highlight.js/styles/github-dark.min.css';
 import compatModules from '@embroider/virtual/compat-modules';
 import Resolver from 'ember-resolver';
 import loadInitializers from 'ember-load-initializers';

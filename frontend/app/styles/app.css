@@ -1,3 +1,4 @@
+@import '../../node_modules/highlight.js/styles/github-dark.min.css';
 
 :root {
   --bg: #0f1117;
@@ -370,14 +371,18 @@ h1 .dot {
 pre {
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 0.75rem 1rem !important;
+  padding: 0.75rem 1rem;
   font-size: 0.8rem;
-  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-family: Menlo, 'SF Mono', Monaco, monospace;
   overflow-x: auto;
   white-space: pre;
   margin-bottom: 1rem;
   max-height: 200px;
   overflow-y: auto;
+}
+
+pre code {
+  font-family: inherit;
 }
 
 .bash-description {
