@@ -2,7 +2,30 @@ import { createRoutes } from "./routes";
 import { pendingRequests, idleSessions, payloadLog, IDLE_SESSION_TTL_MS } from "./state";
 import { settings } from "./settings";
 import { logRemoval } from "./utils";
-import ui from "./ui.html";
+
+// In a compiled binary the frontend is embedded as base64 in this module.
+// In dev (`bun --hot index.ts`) the file won't exist and we fall back to disk.
+let bundle: Record<string, { mime: string; data: string }> | null = null;
+try {
+  const mod = await import("./frontend-bundle.generated");
+  bundle = mod.frontendBundle;
+} catch {
+  // dev: serve from ./frontend/dist/ on disk
+}
+
+function serveFrontend(path: string): Response {
+  const key = path === "/" ? "/index.html" : path;
+  if (bundle) {
+    const entry = bundle[key] ?? bundle["/index.html"];
+    // SAFETY: data is base64 written by scripts/embed-frontend.ts from binary file reads
+    return new Response(Buffer.from(entry.data, "base64"), {
+      headers: { "Content-Type": entry.mime },
+    });
+  }
+  // dev fallback
+  const file = Bun.file(`./frontend/dist${key}`);
+  return new Response(file);
+}
 
 const PORT = Number(process.env.PORT ?? 4759);
 
@@ -10,8 +33,11 @@ Bun.serve({
   port: PORT,
   idleTimeout: 0,
   routes: {
-    "/": ui,
     ...createRoutes(pendingRequests, idleSessions, settings, payloadLog),
+    "/*": (req) => {
+      const { pathname } = new URL(req.url);
+      return serveFrontend(pathname);
+    },
   },
 });
 

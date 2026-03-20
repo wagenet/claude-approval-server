@@ -1,5 +1,5 @@
 ---
-description: Use Bun instead of Node.js, npm, pnpm, or vite.
+description: Bun server with Ember 6 frontend. Use pnpm for frontend/, bun for everything else.
 alwaysApply: true
 ---
 
@@ -9,10 +9,11 @@ This is a Claude Code approval server. It intercepts Claude's `PermissionRequest
 
 **Files:**
 
-- `index.ts` — Bun HTTP server (all state is in-memory; no database)
-- `ui.ts` — Frontend code bundled via `ui.html`
+- `index.ts` — Bun HTTP server (all state is in-memory; no database); serves `frontend/dist/` in dev, embedded bundle in binary
+- `frontend/` — Ember 6 + Embroider + Vite app (GTS strict mode); built with `pnpm --dir frontend build`
 - `hook-shim.sh` — Bash shim invoked by Claude Code hooks; enriches payload with terminal env vars and forwards to the server via `curl`
 - `cli.ts` — CLI entry point; `serve` subcommand starts the server (used by `brew services`)
+- `scripts/embed-frontend.ts` — run after `vite build`; generates `frontend-bundle.generated.ts` so `bun build --compile` embeds all frontend assets
 
 **External runtime dependencies** (not in package.json):
 
@@ -22,7 +23,9 @@ This is a Claude Code approval server. It intercepts Claude's `PermissionRequest
 
 **Running:**
 
-- Dev: `bun --hot index.ts`
+- Dev (both servers): `bun run dev` — starts Bun API on `:4759` and Vite on `:5173` (proxy to Bun) via concurrently
+- Dev (API only): `bun --hot index.ts`
+- Dev (frontend only): `pnpm --dir frontend start`
 - Production: managed via `brew services`; logs go to `/tmp/claude-approval.log`
 
 **Releases:**
@@ -49,13 +52,13 @@ Keep `README.md` up to date whenever you make changes that affect:
 
 When running in Claude Code Web (`$CLAUDE_CODE_REMOTE=true`), take screenshots of the UI at `http://localhost:4759` and include them in pull request descriptions. Start the server with `bun index.ts &` before taking screenshots, then kill it after. Use the screenshot tool to capture the UI and embed the images in the PR body.
 
-Default to using Bun instead of Node.js.
+Default to using Bun instead of Node.js for server-side code. Use pnpm for the `frontend/` package.
 
 - Use `bun <file>` instead of `node <file>` or `ts-node <file>`
 - Use `bun test` instead of `jest` or `vitest`
-- Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
-- Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
-- Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
+- Use `bun install` instead of `npm install` (root package)
+- Use `bun run <script>` instead of `npm run <script>` (root package)
+- Use `pnpm` for anything inside `frontend/`
 - Bun automatically loads .env, so don't use dotenv.
 
 ## APIs
@@ -103,75 +106,22 @@ test("hello world", () => {
 
 ## Frontend
 
-Use HTML imports with `Bun.serve()`. Don't use `vite`. HTML imports fully support React, CSS, Tailwind.
+The frontend is an Ember 6 app in `frontend/` using Embroider + Vite and GTS strict mode. Do not replace it with a Bun HTML import.
 
-Server:
+**Structure:**
 
-```ts#index.ts
-import index from "./index.html"
+- `frontend/app/services/` — `approval-queue.ts` (1s polling, notifications), `app-settings.ts` (theme/config)
+- `frontend/app/components/` — GTS components: `queue-card`, `ask-user-question-card`, `idle-session-card`, `code-block`, `diff-block`, `plan-modal`, `settings-modal`, `countdown-timer`, `terminal-icon`, `approval-queue`, `idle-sessions`
+- `frontend/app/templates/application.gts` — root layout; injects services and starts polling in constructor
+- `frontend/app/utils/ui-utils.ts` — pure formatting helpers (no DOM); `ui-types.ts` — shared types
+- `frontend/app/utils/helpers.ts` — `eq` and other template helpers (`eq` is not exported by `@ember/helper` in v6.11)
 
-Bun.serve({
-  routes: {
-    "/": index,
-    "/api/users/:id": {
-      GET: (req) => {
-        return new Response(JSON.stringify({ id: req.params.id }));
-      },
-    },
-  },
-  // optional websocket support
-  websocket: {
-    open: (ws) => {
-      ws.send("Hello, world!");
-    },
-    message: (ws, message) => {
-      ws.send(message);
-    },
-    close: (ws) => {
-      // handle close
-    }
-  },
-  development: {
-    hmr: true,
-    console: true,
-  }
-})
-```
-
-HTML files can import .tsx, .jsx or .js files directly and Bun's bundler will transpile & bundle automatically. `<link>` tags can point to stylesheets and Bun's CSS bundler will bundle.
-
-```html#index.html
-<html>
-  <body>
-    <h1>Hello, world!</h1>
-    <script type="module" src="./frontend.tsx"></script>
-  </body>
-</html>
-```
-
-With the following `frontend.tsx`:
-
-```tsx#frontend.tsx
-import React from "react";
-
-// import .css files directly and it works
-import './index.css';
-
-import { createRoot } from "react-dom/client";
-
-const root = createRoot(document.body);
-
-export default function Frontend() {
-  return <h1>Hello, world!</h1>;
-}
-
-root.render(<Frontend />);
-```
-
-Then, run index.ts
+**Commands:**
 
 ```sh
-bun --hot ./index.ts
+pnpm --dir frontend install   # install deps
+pnpm --dir frontend start     # Vite dev server at :5173
+pnpm --dir frontend build     # production build → frontend/dist/
 ```
 
-For more information, read the Bun API docs in `node_modules/bun-types/docs/**.md`.
+**Production embedding:** Before `bun build --compile`, run `bun scripts/embed-frontend.ts` to generate `frontend-bundle.generated.ts` (gitignored). `index.ts` imports it at startup; if absent it falls back to serving `frontend/dist/` from disk.

@@ -1,3 +1,5 @@
+@import url('../../node_modules/highlight.js/styles/github-dark.min.css');
+
 :root {
   --bg: #0f1117;
   --card-bg: #1e2330;
@@ -7,9 +9,10 @@
   --text-dim: #475569;
   --text-timer: #64748b;
 }
-[data-theme="light"] {
+
+[data-theme='light'] {
   --bg: #f8fafc;
-  --card-bg: #ffffff;
+  --card-bg: #fff;
   --border: #e2e8f0;
   --text: #0f172a;
   --text-muted: #475569;
@@ -26,14 +29,14 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
   padding: 1rem;
 }
 
-@media (min-width: 640px) {
+@media (width >= 640px) {
   body {
     padding: 2rem;
   }
@@ -64,6 +67,7 @@ h1 .dot {
   100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.3;
   }
@@ -89,6 +93,7 @@ h1 .dot {
   padding: 0.5rem 0.9rem;
   font-size: 1.4rem;
 }
+
 #settings-btn:hover {
   color: var(--text-muted);
   border-color: var(--text-dim);
@@ -101,7 +106,7 @@ h1 .dot {
   align-items: flex-start;
 }
 
-@media (min-width: 900px) {
+@media (width >= 900px) {
   .columns {
     flex-direction: row;
   }
@@ -113,7 +118,7 @@ h1 .dot {
   max-width: 720px;
 }
 
-@media (min-width: 900px) {
+@media (width >= 900px) {
   .column {
     flex: 1;
     width: auto;
@@ -121,13 +126,13 @@ h1 .dot {
 }
 
 #queue {
-  display: none;
+  display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
 #idle-list {
-  display: none;
+  display: flex;
   flex-direction: column;
   gap: 1rem;
 }
@@ -137,14 +142,15 @@ h1 .dot {
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 1.25rem;
-  animation: slideIn 0.15s ease;
+  animation: slide-in 0.15s ease;
 }
 
-@keyframes slideIn {
+@keyframes slide-in {
   from {
     opacity: 0;
     transform: translateY(-6px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -169,6 +175,7 @@ h1 .dot {
   line-height: 1;
   flex-shrink: 0;
 }
+
 .btn-x:hover {
   color: var(--text-muted);
 }
@@ -187,31 +194,37 @@ h1 .dot {
   color: #a78bfa;
   border: 1px solid #7c3aed44;
 }
+
 .badge-write {
   background: #dc262622;
   color: #f87171;
   border: 1px solid #dc262644;
 }
+
 .badge-edit {
   background: #d9770622;
   color: #fb923c;
   border: 1px solid #d9770644;
 }
+
 .badge-default {
   background: #0ea5e922;
   color: #38bdf8;
   border: 1px solid #0ea5e944;
 }
+
 .badge-mcp {
   background: #0d946622;
   color: #34d399;
   border: 1px solid #0d946644;
 }
+
 .badge-plan {
   background: #d9770622;
   color: #fb923c;
   border: 1px solid #d9770644;
 }
+
 .card-plan {
   border-left: 3px solid #d97706;
 }
@@ -220,11 +233,12 @@ h1 .dot {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgb(0 0 0 / 75%);
   z-index: 100;
   padding: 2rem;
   overflow-y: auto;
 }
+
 #plan-modal.open {
   display: flex;
   align-items: flex-start;
@@ -272,36 +286,44 @@ h1 .dot {
   font-weight: 600;
   margin: 1.25rem 0 0.5rem;
 }
+
 #plan-modal-body h1 {
   font-size: 1.1rem;
 }
+
 #plan-modal-body h2 {
   font-size: 0.95rem;
 }
+
 #plan-modal-body h3 {
   font-size: 0.875rem;
   color: var(--text-muted);
 }
+
 #plan-modal-body p {
   margin-bottom: 0.75rem;
   line-height: 1.6;
 }
+
 #plan-modal-body ul,
 #plan-modal-body ol {
   margin: 0.5rem 0 0.75rem 1.25rem;
   line-height: 1.6;
 }
+
 #plan-modal-body li {
   margin-bottom: 0.25rem;
 }
+
 #plan-modal-body code {
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: 'SF Mono', 'Fira Code', monospace;
   font-size: 0.8em;
   background: var(--bg);
   padding: 0.1em 0.35em;
   border-radius: 3px;
   color: #fb923c;
 }
+
 #plan-modal-body pre {
   background: var(--bg);
   border: 1px solid var(--border);
@@ -311,16 +333,19 @@ h1 .dot {
   overflow-x: auto;
   max-height: none;
 }
+
 #plan-modal-body pre code {
   background: none;
   padding: 0;
   color: var(--text);
 }
+
 #plan-modal-body hr {
   border: none;
   border-top: 1px solid var(--border);
   margin: 1rem 0;
 }
+
 #plan-modal-body strong {
   color: var(--text);
 }
@@ -340,9 +365,11 @@ h1 .dot {
   background: #16a34a;
   color: #fff;
 }
+
 .btn-approve-plan:hover {
   background: #15803d;
 }
+
 .btn-approve-plan:disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -369,14 +396,17 @@ h1 .dot {
 pre {
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 0.75rem 1rem !important;
+  padding: 0.75rem 1rem;
   font-size: 0.8rem;
-  font-family: "SF Mono", "Fira Code", monospace;
-  overflow-x: auto;
+  font-family: Menlo, 'SF Mono', Monaco, monospace;
+  overflow: auto;
   white-space: pre;
   margin-bottom: 1rem;
   max-height: 200px;
-  overflow-y: auto;
+}
+
+pre code {
+  font-family: inherit;
 }
 
 .bash-description {
@@ -388,15 +418,17 @@ pre {
 }
 
 .file-path {
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: 'SF Mono', 'Fira Code', monospace;
   margin-bottom: 0.25rem;
   line-height: 1.3;
 }
+
 .file-path-dir {
   display: block;
   font-size: 0.72rem;
   color: var(--text-timer);
 }
+
 .file-path-base {
   display: block;
   font-size: 0.9rem;
@@ -407,6 +439,7 @@ pre {
 .two-part-block pre {
   margin-bottom: 0.5rem;
 }
+
 .two-part-block pre:last-child {
   margin-bottom: 0;
 }
@@ -414,50 +447,62 @@ pre {
 .git-commit-block pre {
   margin-bottom: 0.5rem;
 }
+
 .commit-message {
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 0.75rem 1rem;
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: 'SF Mono', 'Fira Code', monospace;
   font-size: 0.82rem;
 }
+
 .commit-subject {
   font-weight: 600;
   font-size: 0.88rem;
   color: var(--text);
-  word-break: break-word;
+  overflow-wrap: break-word;
 }
+
 .commit-type {
   color: #7dd3fc;
 }
+
 .commit-type-feat {
   color: #86efac;
 }
+
 .commit-type-fix {
   color: #fca5a5;
 }
+
 .commit-type-chore {
   color: var(--text-muted);
 }
+
 .commit-type-docs {
   color: #c4b5fd;
 }
+
 .commit-type-refactor {
   color: #fbbf24;
 }
+
 .commit-type-test {
   color: #34d399;
 }
+
 .commit-type-perf {
   color: #f97316;
 }
+
 .commit-body {
   color: var(--text-muted);
   margin-top: 0.6rem;
   white-space: pre-wrap;
   line-height: 1.5;
-  word-break: break-word;
+  overflow-wrap: break-word;
 }
+
 .commit-trailer {
   color: var(--text-dim);
   font-size: 0.78rem;
@@ -467,18 +512,21 @@ pre {
 .diff-block {
   word-break: normal;
 }
+
 .diff-added,
 .diff-removed,
 .diff-context {
   display: block;
   padding: 0 0.25rem;
 }
+
 .diff-added {
-  background: rgba(22, 163, 74, 0.18);
+  background: rgb(22 163 74 / 18%);
   color: #86efac;
 }
+
 .diff-removed {
-  background: rgba(220, 38, 38, 0.18);
+  background: rgb(220 38 38 / 18%);
   color: #fca5a5;
 }
 
@@ -510,6 +558,7 @@ button:active {
   background: #16a34a;
   color: #fff;
 }
+
 .btn-allow:hover {
   background: #15803d;
 }
@@ -518,6 +567,7 @@ button:active {
   background: #374151;
   color: #d1d5db;
 }
+
 .btn-deny:hover {
   background: #4b5563;
 }
@@ -533,10 +583,12 @@ button:active {
   color: var(--text-timer);
   border: 1px solid var(--border);
 }
+
 .btn-explain:hover {
   color: var(--text-muted);
   border-color: var(--text-dim);
 }
+
 .btn-explain:disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -547,6 +599,7 @@ button:active {
   color: var(--text-timer);
   border: 1px solid var(--border);
 }
+
 .btn-focus:hover {
   color: var(--text-muted);
   border-color: var(--text-dim);
@@ -556,11 +609,13 @@ button:active {
   background: var(--text-timer);
   animation: none;
 }
+
 .badge-idle {
   background: var(--card-bg);
   color: var(--text-timer);
   border: 1px solid var(--border);
 }
+
 .idle-time {
   font-size: 0.75rem;
   color: var(--text-dim);
@@ -572,43 +627,51 @@ button:active {
   font-size: 0.8rem;
   color: var(--text-muted);
   line-height: 1.55;
-  word-break: break-word;
+  overflow-wrap: break-word;
   max-height: 200px;
   overflow-y: auto;
   border-left: 2px solid var(--border);
   padding: 0.4rem 0.75rem;
   margin-bottom: 0.75rem;
 }
+
 .idle-output p {
   margin-bottom: 0.4rem;
 }
+
 .idle-output p:last-child {
   margin-bottom: 0;
 }
+
 .idle-output ul,
 .idle-output ol {
   margin: 0.25rem 0 0.4rem 1.1rem;
 }
+
 .idle-output code {
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: 'SF Mono', 'Fira Code', monospace;
   font-size: 0.8em;
   background: var(--bg);
   padding: 0.1em 0.3em;
   border-radius: 3px;
 }
+
 .idle-output a {
   color: var(--text-muted);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+
 .idle-output a:hover {
   color: var(--text);
 }
+
 .btn-dismiss {
   background: transparent;
   color: var(--text-timer);
   border: 1px solid var(--border);
 }
+
 .btn-dismiss:hover {
   color: var(--text-muted);
   border-color: var(--text-dim);
@@ -681,12 +744,18 @@ button:active {
   padding: 0.5rem 0.875rem;
   margin-bottom: 1.25rem;
 }
+
 #notif-banner a {
   color: #38bdf8;
 }
+
 #notif-banner code {
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: 'SF Mono', 'Fira Code', monospace;
   font-size: 0.85em;
+}
+
+#notif-banner.visible {
+  display: block;
 }
 
 .explanation {
@@ -697,6 +766,10 @@ button:active {
   border-left: 2px solid var(--border);
   padding: 0.4rem 0.75rem;
   margin-bottom: 1rem;
+}
+
+.explanation.visible {
+  display: block;
 }
 
 .hidden {
@@ -715,13 +788,14 @@ button:active {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgb(0 0 0 / 75%);
   z-index: 100;
   padding: 2rem;
   overflow-y: auto;
   align-items: flex-start;
   justify-content: center;
 }
+
 #settings-modal.open {
   display: flex;
 }
@@ -772,7 +846,7 @@ button:active {
   color: var(--text-muted);
 }
 
-#settings-body input[type="number"],
+#settings-body input[type='number'],
 #settings-body select {
   background: var(--bg);
   color: var(--text);
@@ -801,81 +875,99 @@ button:active {
   gap: 0.625rem;
 }
 
+/* stylelint-disable selector-class-pattern -- highlight.js uses non-kebab class names */
+
 /* Light-mode syntax highlight overrides (github.min.css palette) */
-[data-theme="light"] .hljs {
+[data-theme='light'] .hljs {
   color: #24292e;
   background: #f6f8fa;
 }
-[data-theme="light"] .hljs-doctag,
-[data-theme="light"] .hljs-keyword,
-[data-theme="light"] .hljs-meta .hljs-keyword,
-[data-theme="light"] .hljs-template-tag,
-[data-theme="light"] .hljs-template-variable,
-[data-theme="light"] .hljs-type,
-[data-theme="light"] .hljs-variable.language_ {
+
+[data-theme='light'] .hljs-doctag,
+[data-theme='light'] .hljs-keyword,
+[data-theme='light'] .hljs-meta .hljs-keyword,
+[data-theme='light'] .hljs-template-tag,
+[data-theme='light'] .hljs-template-variable,
+[data-theme='light'] .hljs-type,
+[data-theme='light'] .hljs-variable.language_ {
   color: #d73a49;
 }
-[data-theme="light"] .hljs-title,
-[data-theme="light"] .hljs-title.class_,
-[data-theme="light"] .hljs-title.class_.inherited__,
-[data-theme="light"] .hljs-title.function_ {
+
+[data-theme='light'] .hljs-title,
+[data-theme='light'] .hljs-title.class_,
+[data-theme='light'] .hljs-title.class_.inherited__,
+[data-theme='light'] .hljs-title.function_ {
   color: #6f42c1;
 }
-[data-theme="light"] .hljs-attr,
-[data-theme="light"] .hljs-attribute,
-[data-theme="light"] .hljs-literal,
-[data-theme="light"] .hljs-meta,
-[data-theme="light"] .hljs-number,
-[data-theme="light"] .hljs-operator,
-[data-theme="light"] .hljs-variable,
-[data-theme="light"] .hljs-selector-attr,
-[data-theme="light"] .hljs-selector-class,
-[data-theme="light"] .hljs-selector-id {
+
+[data-theme='light'] .hljs-attr,
+[data-theme='light'] .hljs-attribute,
+[data-theme='light'] .hljs-literal,
+[data-theme='light'] .hljs-meta,
+[data-theme='light'] .hljs-number,
+[data-theme='light'] .hljs-operator,
+[data-theme='light'] .hljs-variable,
+[data-theme='light'] .hljs-selector-attr,
+[data-theme='light'] .hljs-selector-class,
+[data-theme='light'] .hljs-selector-id {
   color: #005cc5;
 }
-[data-theme="light"] .hljs-regexp,
-[data-theme="light"] .hljs-string,
-[data-theme="light"] .hljs-meta .hljs-string {
+
+[data-theme='light'] .hljs-regexp,
+[data-theme='light'] .hljs-string,
+[data-theme='light'] .hljs-meta .hljs-string {
   color: #032f62;
 }
-[data-theme="light"] .hljs-built_in,
-[data-theme="light"] .hljs-symbol {
+
+[data-theme='light'] .hljs-built_in,
+[data-theme='light'] .hljs-symbol {
   color: #e36209;
 }
-[data-theme="light"] .hljs-comment,
-[data-theme="light"] .hljs-code,
-[data-theme="light"] .hljs-formula {
+
+[data-theme='light'] .hljs-comment,
+[data-theme='light'] .hljs-code,
+[data-theme='light'] .hljs-formula {
   color: #6a737d;
 }
-[data-theme="light"] .hljs-name,
-[data-theme="light"] .hljs-quote,
-[data-theme="light"] .hljs-selector-tag,
-[data-theme="light"] .hljs-selector-pseudo {
+
+[data-theme='light'] .hljs-name,
+[data-theme='light'] .hljs-quote,
+[data-theme='light'] .hljs-selector-tag,
+[data-theme='light'] .hljs-selector-pseudo {
   color: #22863a;
 }
-[data-theme="light"] .hljs-subst {
+
+[data-theme='light'] .hljs-subst {
   color: #24292e;
 }
-[data-theme="light"] .hljs-section {
+
+[data-theme='light'] .hljs-section {
   color: #005cc5;
   font-weight: bold;
 }
-[data-theme="light"] .hljs-bullet {
+
+[data-theme='light'] .hljs-bullet {
   color: #735c0f;
 }
-[data-theme="light"] .hljs-emphasis {
+
+[data-theme='light'] .hljs-emphasis {
   color: #24292e;
   font-style: italic;
 }
-[data-theme="light"] .hljs-strong {
+
+[data-theme='light'] .hljs-strong {
   color: #24292e;
   font-weight: bold;
 }
-[data-theme="light"] .hljs-addition {
+
+[data-theme='light'] .hljs-addition {
   color: #22863a;
   background-color: #f0fff4;
 }
-[data-theme="light"] .hljs-deletion {
+
+[data-theme='light'] .hljs-deletion {
   color: #b31d28;
   background-color: #ffeef0;
 }
+
+/* stylelint-enable selector-class-pattern */

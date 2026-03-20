@@ -3,11 +3,19 @@
 ## Dev setup
 
 ```sh
-bun install
-bun run index.ts   # server at http://localhost:4759
-bun test
-bun run lint
-bun run format
+bun install                      # install root deps (Bun)
+pnpm --dir frontend install      # install frontend deps
+
+bun run dev                      # API (:4759) + Vite (:5173) together
+bun test                         # server-side tests
+bun run lint && bun run format   # lint + format check
+```
+
+The `frontend/` package uses pnpm. To work on the frontend alone:
+
+```sh
+pnpm --dir frontend start   # Vite dev server (proxies API to :4759)
+pnpm --dir frontend build   # production build → frontend/dist/
 ```
 
 ## Conventional commits

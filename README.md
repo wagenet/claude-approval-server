@@ -85,6 +85,14 @@ claude-approval-server logs           Tail server logs
 ## Run (dev)
 
 ```sh
+bun run dev
+```
+
+Starts the Bun API server on `:4759` and the Vite dev server on `:5173` (proxies API calls to Bun). Open http://localhost:5173 for hot-module reload during development.
+
+To run the API server alone (e.g. when testing a production build):
+
+```sh
 bun --hot index.ts
 ```
 
