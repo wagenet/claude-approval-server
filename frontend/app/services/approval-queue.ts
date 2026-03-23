@@ -19,7 +19,10 @@ export default class ApprovalQueueService extends Service {
   #interval?: ReturnType<typeof setInterval>;
 
   async start() {
-    if (Notification.permission === 'default') {
+    if (
+      typeof Notification !== 'undefined' &&
+      Notification.permission === 'default'
+    ) {
       void Notification.requestPermission();
     }
     await this.appSettings.load();
@@ -65,7 +68,11 @@ export default class ApprovalQueueService extends Service {
   }
 
   #notify(title: string, body: string, opts: NotificationOptions = {}) {
-    if (!this.appSettings.notifEnabled || Notification.permission !== 'granted')
+    if (
+      !this.appSettings.notifEnabled ||
+      typeof Notification === 'undefined' ||
+      Notification.permission !== 'granted'
+    )
       return;
     const n = new Notification(title, { body, ...opts });
     n.onclick = () => {
