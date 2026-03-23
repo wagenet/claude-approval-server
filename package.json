@@ -6,7 +6,7 @@
   "module": "index.ts",
   "scripts": {
     "dev": "concurrently --names api,ui --prefix-colors blue,green \"bun --hot index.ts\" \"pnpm --dir frontend start\"",
-    "test": "bun test",
+    "test": "bun test && pnpm --dir frontend test",
     "lint": "oxlint --type-aware --report-unused-disable-directives --ignore-pattern 'frontend/**' . && pnpm --dir frontend lint",
     "lint:fix": "oxlint --type-aware --report-unused-disable-directives --fix --ignore-pattern 'frontend/**' . && pnpm --dir frontend lint:fix",
     "format": "oxfmt --write . && pnpm --dir frontend format",
