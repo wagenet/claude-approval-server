@@ -22,7 +22,7 @@ jobs:
       - run: pnpm --dir frontend build
       - name: Smoke test server
         run: |
-          bun cli.ts serve &
+          bun src/cli.ts serve &
           SERVER_PID=$!
           sleep 2
           curl -sf http://localhost:4759/queue

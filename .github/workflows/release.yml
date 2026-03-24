@@ -21,9 +21,9 @@ jobs:
           bun scripts/embed-frontend.ts
       - name: Build binaries
         run: |
-          bun build --compile --minify --target=bun-darwin-arm64 cli.ts \
+          bun build --compile --minify --target=bun-darwin-arm64 src/cli.ts \
             --outfile dist/claude-approval-server-macos-arm64
-          bun build --compile --minify --target=bun-darwin-x64 cli.ts \
+          bun build --compile --minify --target=bun-darwin-x64 src/cli.ts \
             --outfile dist/claude-approval-server-macos-x86_64
       - name: Smoke test binary
         run: |

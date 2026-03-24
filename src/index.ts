@@ -7,7 +7,7 @@ import { logRemoval } from "./utils";
 // In dev (`bun --hot index.ts`) the file won't exist and we fall back to disk.
 let bundle: Record<string, { mime: string; data: string }> | null = null;
 try {
-  const mod = await import("./frontend-bundle.generated");
+  const mod = await import("../frontend-bundle.generated");
   bundle = mod.frontendBundle;
 } catch {
   // dev: serve from ./frontend/dist/ on disk
