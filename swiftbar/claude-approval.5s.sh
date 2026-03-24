@@ -13,6 +13,12 @@ PORT="${PORT:-4759}"
 SERVER="http://127.0.0.1:$PORT"
 
 HEALTH=$(curl -s --max-time 2 "$SERVER/health" 2>/dev/null)
+
+if [ -z "$HEALTH" ]; then
+  echo "| sfimage=asterisk.slash color=#808080"
+  exit 0
+fi
+
 PENDING=$(echo "$HEALTH" | grep -o '"pending":[0-9]*' | grep -o '[0-9]*')
 if [ -z "$PENDING" ] || ! [[ "$PENDING" =~ ^[0-9]+$ ]]; then
   PENDING=0

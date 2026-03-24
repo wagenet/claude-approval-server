@@ -225,7 +225,19 @@ async function runInstallSwiftbar(): Promise<void> {
     process.exit(1);
   }
 
-  const scriptName = "claude-approval.30s.sh";
+  const scriptName = "claude-approval.5s.sh";
+
+  // Remove any previously installed versions with different refresh intervals
+  const existing = await Array.fromAsync(
+    new Bun.Glob("claude-approval.*.sh").scan(pluginsDir),
+  );
+  for (const old of existing) {
+    if (old !== scriptName) {
+      await Bun.$`rm -f ${join(pluginsDir, old)}`.quiet();
+      console.log(`✓ Removed old plugin: ${old}`);
+    }
+  }
+
   const dest = join(pluginsDir, scriptName);
   const src = Bun.file(new URL(`../swiftbar/${scriptName}`, import.meta.url));
   await Bun.write(dest, await src.text());
