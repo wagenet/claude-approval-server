@@ -160,7 +160,8 @@ h1 .dot {
 .card-header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
   margin-bottom: 1rem;
 }
 
@@ -380,6 +381,11 @@ h1 .dot {
   color: var(--text-dim);
   font-family: monospace;
   margin-left: auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 18ch;
 }
 
 .timer {
@@ -391,6 +397,11 @@ h1 .dot {
   font-size: 0.72rem;
   color: var(--text-dim);
   font-family: monospace;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
 }
 
 pre {
@@ -532,6 +543,7 @@ pre code {
 
 .actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.625rem;
 }
 
