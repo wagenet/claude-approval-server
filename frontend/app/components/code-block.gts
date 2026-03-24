@@ -1,5 +1,6 @@
 import Component from '@glimmer/component';
 import hljs from 'highlight.js';
+import 'highlight.js/styles/github-dark.min.css';
 import { htmlSafe } from '@ember/template';
 import type { SafeString } from '@ember/template';
 import DiffBlock from './diff-block';
