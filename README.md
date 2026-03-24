@@ -65,14 +65,29 @@ brew upgrade claude-approval-server
 brew services restart claude-approval-server
 ```
 
+## SwiftBar integration (optional)
+
+[SwiftBar](https://swiftbar.app) is a macOS menu bar app that runs scripts on a schedule. The integration shows a badge with the number of pending approvals in your menu bar and opens the web UI in a persistent webview when clicked.
+
+**Requirements:** SwiftBar 2.1.0+ (for the configurable port variable)
+
+```sh
+claude-approval-server install-swiftbar
+```
+
+Then refresh SwiftBar plugins (right-click the SwiftBar icon → Refresh All Plugins).
+
+The plugin polls `/health` every 30 seconds and shows a badge when approvals are pending. The server port defaults to `4759` and can be changed in SwiftBar → Preferences → Code Plugins → Claude Approval → Port.
+
 ## Commands
 
 ```
-claude-approval-server serve          Start the server (used by brew services)
-claude-approval-server install-hooks  Configure Claude Code hooks in ~/.claude/settings.json (recovery)
-claude-approval-server uninstall      Remove Claude Code hooks
-claude-approval-server status         Show server status
-claude-approval-server logs           Tail server logs
+claude-approval-server serve             Start the server (used by brew services)
+claude-approval-server install-hooks     Configure Claude Code hooks in ~/.claude/settings.json (recovery)
+claude-approval-server install-swiftbar  Install the SwiftBar menu bar plugin
+claude-approval-server uninstall         Remove Claude Code hooks
+claude-approval-server status            Show server status
+claude-approval-server logs              Tail server logs
 ```
 
 `install-hooks` is a recovery command — e.g., if you clear `~/.claude/settings.json`. Homebrew runs it automatically on install and upgrade.
