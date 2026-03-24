@@ -3,6 +3,7 @@ import hljs from 'highlight.js';
 import 'highlight.js/styles/github-dark.min.css';
 import { htmlSafe } from '@ember/template';
 import type { SafeString } from '@ember/template';
+import { marked } from 'marked';
 import DiffBlock from './diff-block';
 import {
   asString,
@@ -23,7 +24,12 @@ interface Sig {
 
 type DisplayKind =
   | { kind: 'diff' }
-  | { kind: 'git-commit'; info: GitCommitInfo; preambleHtml: SafeString }
+  | {
+      kind: 'git-commit';
+      info: GitCommitInfo;
+      preambleHtml: SafeString;
+      bodyHtml: SafeString;
+    }
   | {
       kind: 'two-part';
       headerHtml: SafeString;
@@ -81,6 +87,8 @@ export default class CodeBlock extends Component<Sig> {
           kind: 'git-commit',
           info: gitInfo,
           preambleHtml: highlight(gitInfo.preamble, 'bash'),
+          // SAFETY: marked.parse returns string when called synchronously
+          bodyHtml: htmlSafe(marked.parse(gitInfo.body) as string),
         };
       }
 
@@ -336,7 +344,7 @@ export default class CodeBlock extends Component<Sig> {
               {{/if}}
             </div>
             {{#if gc.info.body}}
-              <div class="commit-body">{{gc.info.body}}</div>
+              <div class="commit-body markdown-body">{{gc.bodyHtml}}</div>
             {{/if}}
             {{#each gc.info.trailers as |trailer|}}
               <div class="commit-trailer">{{trailer}}</div>

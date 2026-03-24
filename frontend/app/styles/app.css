@@ -507,9 +507,39 @@ pre code {
 .commit-body {
   color: var(--text-muted);
   margin-top: 0.6rem;
-  white-space: pre-wrap;
-  line-height: 1.5;
+  font-size: 0.875rem;
+  line-height: 1.6;
   overflow-wrap: break-word;
+}
+
+.commit-body p {
+  margin-bottom: 0.6rem;
+}
+
+.commit-body p:last-child {
+  margin-bottom: 0;
+}
+
+.commit-body ul,
+.commit-body ol {
+  margin: 0.25rem 0 0.6rem 1.25rem;
+}
+
+.commit-body li {
+  margin-bottom: 0.2rem;
+}
+
+.commit-body code {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.8em;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0.1em 0.3em;
+}
+
+.commit-body strong {
+  color: var(--text);
 }
 
 .commit-trailer {
