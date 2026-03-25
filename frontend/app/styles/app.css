@@ -553,6 +553,16 @@ pre code {
   color: var(--text);
 }
 
+.commit-body a {
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.commit-body a:hover {
+  color: var(--text);
+}
+
 .commit-trailer {
   color: var(--text-dim);
   font-size: 0.78rem;
