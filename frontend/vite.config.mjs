@@ -14,7 +14,7 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      '^/(queue|idle|pending|decide|dismiss|focus|focus-idle|post-tool-use|stop|explain|log|config|health)':
+      '^/(queue|idle|pending|decide|dismiss|focus|focus-idle|post-tool-use|stop|explain|log|config|health|window-activity)':
         'http://localhost:4759',
     },
   },

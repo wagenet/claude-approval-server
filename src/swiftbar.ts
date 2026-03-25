@@ -7,8 +7,9 @@ const BADGE_CIRCLES = [
 
 let enabled = false;
 let port = 4759;
-let lastQueuePollAt = 0;
-let closeTimer: ReturnType<typeof setTimeout> | null = null;
+let windowVisible = false;
+let latestCount = 0;
+let lastKnownOrigin: string | null = null;
 
 function badge(count: number): string {
   if (count <= 0) return "";
@@ -16,7 +17,7 @@ function badge(count: number): string {
 }
 
 function buildContent(pendingCount: number): string {
-  const url = process.env.SWIFTBAR_URL ?? `http://127.0.0.1:${port}`;
+  const url = process.env.SWIFTBAR_URL ?? lastKnownOrigin ?? `http://127.0.0.1:${port}`;
   return `${badge(pendingCount)} | sfimage=asterisk href='${url}' webview=true webvieww=440 webviewh=700`;
 }
 
@@ -42,19 +43,22 @@ export async function initSwiftBar(serverPort: number): Promise<void> {
   setEphemeral(buildContent(0));
 }
 
-export function recordWindowActivity(pendingCount: number): void {
-  lastQueuePollAt = Date.now();
+// Called when the frontend reports a visibilitychange event.
+export function recordWindowVisibility(visible: boolean, pendingCount: number, origin?: string): void {
+  latestCount = pendingCount;
+  windowVisible = visible;
+  if (origin) lastKnownOrigin = origin;
   if (!enabled) return;
-  if (closeTimer) clearTimeout(closeTimer);
-  closeTimer = setTimeout(() => {
-    closeTimer = null;
-    setEphemeral(buildContent(pendingCount));
-  }, 3000);
+  if (!visible) {
+    setTimeout(() => setEphemeral(buildContent(latestCount)), 300);
+  }
 }
 
+// Called when the queue changes. Suppressed while the popup is open to avoid closing it.
 export function notifySwiftBar(pendingCount: number): void {
+  latestCount = pendingCount;
   if (!enabled) return;
-  if (Date.now() - lastQueuePollAt < 3000) return;
+  if (windowVisible) return;
   setEphemeral(buildContent(pendingCount));
 }
 

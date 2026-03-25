@@ -12,7 +12,7 @@ import {
   logRemoval,
   readSessionName,
 } from "./utils";
-import { notifySwiftBar, recordWindowActivity } from "./swiftbar";
+import { notifySwiftBar, recordWindowVisibility } from "./swiftbar";
 
 function focusTerminal(entry: PendingEntry) {
   const script = buildFocusScript(entry.payload);
@@ -52,7 +52,6 @@ export function createRoutes(
 
     "/queue": {
       GET() {
-        recordWindowActivity(pending.size);
         const items = [...pending.entries()].map(
           ([id, { payload, enqueuedAt, explanation, sessionName }]) => ({
             id,
@@ -173,6 +172,15 @@ export function createRoutes(
     "/health": {
       GET() {
         return Response.json({ ok: true, pending: pending.size, idle: idleSessions.size });
+      },
+    },
+
+    "/window-activity": {
+      async POST(req: Request) {
+        // SAFETY: body is { visible: boolean } from the frontend visibilitychange listener
+        const body = (await req.json()) as { visible: boolean; origin?: string };
+        recordWindowVisibility(body.visible, pending.size, body.origin);
+        return Response.json({ ok: true });
       },
     },
 

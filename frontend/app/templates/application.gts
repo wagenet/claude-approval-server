@@ -16,6 +16,20 @@ export default class ApplicationTemplate extends Component {
   constructor(owner: Owner, args: object) {
     super(owner, args);
     void this.approvalQueue.start();
+    document.addEventListener('visibilitychange', () => {
+      void fetch('/window-activity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          visible: document.visibilityState === 'visible',
+          origin: window.location.origin,
+        }),
+      });
+    });
+  }
+
+  get host() {
+    return window.location.host;
   }
 
   get notifDenied() {
@@ -34,7 +48,7 @@ export default class ApplicationTemplate extends Component {
       <div id="notif-banner" class="visible">
         Notifications are blocked for this page. Check your browser's
         notification settings for
-        <code>localhost:4759</code>
+        <code>{{this.host}}</code>
         and set it to Allow, then reload.
       </div>
     {{/if}}
