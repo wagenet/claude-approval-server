@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import type { PendingEntry, IdleSession } from "./types";
 import { saveSettings, type Settings } from "./settings";
-import { AUTO_DENY_TIMEOUT_MS, LOG_MAX, type LogEntry } from "./state";
+import { TIMEOUT_MS, LOG_MAX, type LogEntry } from "./state";
 import {
   asString,
   stableStringify,
@@ -356,12 +356,12 @@ export function createRoutes(
         setTimeout(() => {
           const entry = pending.get(id);
           if (entry) {
-            logRemoval(id, "auto-deny-timeout", entry);
+            logRemoval(id, "timeout", entry);
             pending.delete(id);
             notifySwiftBar(pending.size);
-            resolveDecision("deny");
+            resolveDecision("dismiss");
           }
-        }, AUTO_DENY_TIMEOUT_MS);
+        }, TIMEOUT_MS);
 
         const encoder = new TextEncoder();
         let clientGone = false;

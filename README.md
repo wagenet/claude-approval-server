@@ -1,20 +1,20 @@
 # claude-approval-server
 
-Approval server for Claude Code hooks. Blocks tool calls until approved or denied, and tracks idle sessions so you can check whether more work is needed.
+Approval server for Claude Code hooks. Intercepts tool calls and presents them for review in a web UI, and tracks idle sessions so you can check whether more work is needed.
 
 ## How it works
 
 **Approvals:**
 
 1. Claude Code fires a `PermissionRequest` hook — a shell shim enriches the payload with terminal environment info and forwards it to `POST /pending`
-2. The server holds the connection open (up to 10 minutes), queuing the item
+2. The server queues the item and holds the connection open
 3. A browser notification appears — clicking it focuses the web UI tab
 4. The item appears in the web UI at `http://localhost:4759`, where you can approve/deny, request an AI explanation, or focus the originating terminal window
-5. The server responds to the hook, unblocking Claude
+5. The server responds to the hook with the decision
 
-You can still approve from Claude Code's own CLI prompt. When you do, the `PostToolUse` hook fires and the server automatically clears the stale pending item.
+You can also approve or deny from Claude Code's own CLI prompt. When you do, the `PostToolUse` hook fires and the server automatically clears the stale pending item.
 
-If no decision is made within 10 minutes, the request is auto-denied.
+If no decision is made before the hook times out, the server closes the connection and Claude falls back to its normal CLI permission prompt.
 
 **AskUserQuestion:**
 
@@ -137,7 +137,7 @@ Homebrew configures these hooks automatically via `post_install`. For reference,
 }
 ```
 
-`PermissionRequest` — Claude waits up to 10 minutes for approval. If the server is unreachable, Claude falls back to its normal approval prompt.
+`PermissionRequest` — if the server is unreachable or times out, Claude falls back to its normal CLI approval prompt.
 
 `PostToolUse` — fires after each tool runs. If you approved a request from the CLI prompt (bypassing the web UI), this clears the stale pending item from the queue automatically.
 

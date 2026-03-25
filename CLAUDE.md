@@ -37,7 +37,7 @@ This is a Claude Code approval server. It intercepts Claude's `PermissionRequest
 
 **Key invariants:**
 
-- `AUTO_DENY_TIMEOUT_MS` (10 min) must match the `timeout: 600` in Claude's hook config
+- `TIMEOUT_MS` (10 min) should match the `timeout: 600` in Claude's hook config — on timeout the server closes the connection and Claude falls back to its CLI prompt
 - The `PostToolUse` hook fires after the user approves from the CLI, allowing stale pending items to self-clear via `/post-tool-use`
 - `AskUserQuestion` cards auto-clear when the next tool call from the same session arrives
 
