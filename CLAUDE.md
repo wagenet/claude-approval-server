@@ -12,6 +12,10 @@ This is a Claude Code approval server. It intercepts Claude's `PermissionRequest
 - `src/index.ts` — Bun HTTP server (all state is in-memory; no database); serves `frontend/dist/` in dev, embedded bundle in binary
 - `src/cli.ts` — CLI entry point; `serve` subcommand starts the server (used by `brew services`)
 - `src/routes.ts` — HTTP route handlers
+- `src/state.ts` — shared in-memory state (`pendingRequests`, `idleSessions` Maps), constants (`TIMEOUT_MS`, `IDLE_SESSION_TTL_MS`, `LOG_MAX`), and payload log
+- `src/settings.ts` — persists user settings to `~/.claude/claude-approval-server/settings.json`
+- `src/types.ts` — shared TypeScript interfaces (`PendingEntry`, `IdleSession`)
+- `src/utils.ts` — pure helpers: `buildFocusScript`, `buildExplainPrompt`, `allowResponse`/`denyResponse`, `readSessionName`
 - `src/swiftbar.ts` — SwiftBar ephemeral plugin integration; called by `index.ts` on startup; gracefully skipped if SwiftBar is not installed
 - `frontend/` — Ember 6 + Embroider + Vite app (GTS strict mode); built with `pnpm --dir frontend build`
 - `hook-shim.sh` — Bash shim invoked by Claude Code hooks; enriches payload with terminal env vars and forwards to the server via `curl`
@@ -21,14 +25,15 @@ This is a Claude Code approval server. It intercepts Claude's `PermissionRequest
 
 - `jq`, `curl` — used in `hook-shim.sh`
 - `osascript` — used for terminal focus (AppleScript)
-- `claude` CLI — `/explain/:id` spawns `claude -p ... --model haiku` as a subprocess
+- `claude` CLI — `/explain/:id` spawns `claude -p ... --model haiku --effort low` as a subprocess
 
 **Running:**
 
 - Dev (both servers): `bun run dev` — starts Bun API on `:4759` and Vite on `:4200` (proxy to Bun) via concurrently
 - Dev (API only): `bun --hot src/index.ts`
 - Dev (frontend only): `pnpm --dir frontend start`
-- Production: managed via `brew services`; logs go to `/tmp/claude-approval.log`
+- Production: managed via `brew services`; stdout → `/tmp/claude-approval.log`, stderr → `/tmp/claude-approval.error.log`
+- `SWIFTBAR_URL` env var — overrides the URL used in the SwiftBar webview (dev script sets it to `http://127.0.0.1:4200`)
 
 **Releases:**
 
@@ -38,6 +43,8 @@ This is a Claude Code approval server. It intercepts Claude's `PermissionRequest
 **Key invariants:**
 
 - `TIMEOUT_MS` (10 min) should match the `timeout: 600` in Claude's hook config — on timeout the server closes the connection and Claude falls back to its CLI prompt
+- `IDLE_SESSION_TTL_MS` (24 h) — idle sessions auto-expire after this duration
+- `LOG_MAX` (200) — payload log is capped; oldest entries are dropped
 - The `PostToolUse` hook fires after the user approves from the CLI, allowing stale pending items to self-clear via `/post-tool-use`
 - `AskUserQuestion` cards auto-clear when the next tool call from the same session arrives
 
@@ -96,9 +103,9 @@ Run `bun run lint` and `bun run format:check` before committing. CI enforces bot
 
 ## Testing
 
-Write tests for new server-side logic. Run `bun test` after making changes to confirm nothing is broken.
+Write tests for new server-side logic. Run `bun test` after making changes to confirm nothing is broken. Existing tests follow the `*.test.ts` convention next to their source files (`cli.test.ts`, `routes.test.ts`, `swiftbar.test.ts`, `utils.test.ts`).
 
-```ts#index.test.ts
+```ts#example.test.ts
 import { test, expect } from "bun:test";
 
 test("hello world", () => {
