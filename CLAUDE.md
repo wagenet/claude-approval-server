@@ -105,6 +105,8 @@ Run `bun run lint` and `bun run format:check` before committing. CI enforces bot
 
 Write tests for new server-side logic. Run `bun test` after making changes to confirm nothing is broken. Existing tests follow the `*.test.ts` convention next to their source files (`cli.test.ts`, `routes.test.ts`, `swiftbar.test.ts`, `utils.test.ts`).
 
+Frontend utility tests (e.g. `ui-utils`) live in `frontend/tests/unit/utils/ui-utils-test.ts` and use QUnit (`module`/`test`/`assert`). Import from `'frontend/utils/ui-utils'`. Run with `pnpm --dir frontend test`. Do **not** put frontend utility tests in `src/` or use `bun:test` for them.
+
 ```ts#example.test.ts
 import { test, expect } from "bun:test";
 
