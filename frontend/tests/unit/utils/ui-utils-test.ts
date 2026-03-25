@@ -1,5 +1,6 @@
 import { module, test } from 'qunit';
 import {
+  asString,
   badgeClass,
   parseMcpToolName,
   formatToolName,
@@ -11,6 +12,7 @@ import {
   parseInterpreterCall,
   langFromInterpreter,
   parseGitCommit,
+  parseEmbeddedJson,
 } from 'frontend/utils/ui-utils';
 
 module('parseMcpToolName', function () {
@@ -626,5 +628,61 @@ module('langFromInterpreter', function () {
 
   test('sh', function (assert) {
     assert.strictEqual(langFromInterpreter('sh'), 'bash');
+  });
+});
+
+module('asString', function () {
+  test('returns string as-is', function (assert) {
+    assert.strictEqual(asString('hello'), 'hello');
+  });
+
+  test('returns empty fallback for non-string', function (assert) {
+    assert.strictEqual(asString(42), '');
+    assert.strictEqual(asString(null), '');
+    assert.strictEqual(asString(undefined), '');
+    assert.strictEqual(asString({}), '');
+  });
+
+  test('returns custom fallback', function (assert) {
+    assert.strictEqual(asString(undefined, 'default'), 'default');
+  });
+});
+
+module('parseEmbeddedJson', function () {
+  test('parses JSON object string', function (assert) {
+    const result = parseEmbeddedJson({ data: '{"key": "value"}' });
+    assert.deepEqual(result.data, { key: 'value' });
+  });
+
+  test('parses JSON array string', function (assert) {
+    const result = parseEmbeddedJson({ items: '[1, 2, 3]' });
+    assert.deepEqual(result.items, [1, 2, 3]);
+  });
+
+  test('leaves non-JSON strings unchanged', function (assert) {
+    const result = parseEmbeddedJson({ name: 'hello world' });
+    assert.strictEqual(result.name, 'hello world');
+  });
+
+  test('leaves non-string values unchanged', function (assert) {
+    const input = { count: 42 } as unknown as Record<string, unknown>;
+    const result = parseEmbeddedJson(input);
+    assert.strictEqual(result.count, 42);
+  });
+
+  test('handles invalid JSON gracefully', function (assert) {
+    const result = parseEmbeddedJson({ bad: '{not valid json}' });
+    assert.strictEqual(result.bad, '{not valid json}');
+  });
+
+  test('handles whitespace around JSON', function (assert) {
+    const result = parseEmbeddedJson({ data: '  {"key": "value"}  ' });
+    assert.deepEqual(result.data, { key: 'value' });
+  });
+
+  test('does not parse strings that only start or end with braces', function (assert) {
+    const result = parseEmbeddedJson({ a: '{hello', b: 'world}' });
+    assert.strictEqual(result.a, '{hello');
+    assert.strictEqual(result.b, 'world}');
   });
 });

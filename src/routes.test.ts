@@ -3,20 +3,20 @@ import { createRoutes } from "./routes";
 import type { Settings } from "./settings";
 import type { PendingEntry, IdleSession } from "./types";
 
-const testSettings: Settings = {
-  theme: "dark",
-  notifRequireInteraction: true,
-};
-
 function makeServer() {
   const pending = new Map<string, PendingEntry>();
   const idle = new Map<string, IdleSession>();
   const log: import("./state").LogEntry[] = [];
+  const settings: Settings = {
+    theme: "dark",
+    notifEnabled: true,
+    notifRequireInteraction: true,
+  };
   const server = Bun.serve({
     port: 0,
-    routes: createRoutes(pending, idle, testSettings, log),
+    routes: createRoutes(pending, idle, settings, log),
   });
-  return { server, pending, idle, log };
+  return { server, pending, idle, log, settings };
 }
 
 describe("GET /health", () => {
@@ -461,5 +461,275 @@ describe("DELETE /idle/:id", () => {
   test("404 on missing", async () => {
     const res = await fetch(`http://localhost:${server.port}/idle/nope`, { method: "DELETE" });
     expect(res.status).toBe(404);
+  });
+});
+
+describe("PATCH /config", () => {
+  let server: ReturnType<typeof Bun.serve>;
+
+  beforeEach(() => {
+    ({ server } = makeServer());
+  });
+  afterEach(() => server.stop(true));
+
+  test("GET returns current config", async () => {
+    const res = await fetch(`http://localhost:${server.port}/config`);
+    const body = (await res.json()) as Settings;
+    expect(body.theme).toBe("dark");
+  });
+
+  test("PATCH updates valid theme", async () => {
+    const res = await fetch(`http://localhost:${server.port}/config`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ theme: "light" }),
+    });
+    const body = (await res.json()) as Settings;
+    expect(body.theme).toBe("light");
+  });
+
+  test("PATCH ignores invalid theme value", async () => {
+    const res = await fetch(`http://localhost:${server.port}/config`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ theme: "blue" }),
+    });
+    const body = (await res.json()) as Settings;
+    expect(body.theme).toBe("dark");
+  });
+
+  test("PATCH updates boolean settings", async () => {
+    const res = await fetch(`http://localhost:${server.port}/config`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notifEnabled: false, notifRequireInteraction: false }),
+    });
+    const body = (await res.json()) as Settings;
+    expect(body.notifEnabled).toBe(false);
+    expect(body.notifRequireInteraction).toBe(false);
+  });
+
+  test("PATCH ignores non-boolean for boolean fields", async () => {
+    const res = await fetch(`http://localhost:${server.port}/config`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notifEnabled: "yes" }),
+    });
+    const body = (await res.json()) as Settings;
+    expect(body.notifEnabled).toBe(true);
+  });
+});
+
+describe("POST /dismiss/:id", () => {
+  let server: ReturnType<typeof Bun.serve>;
+  let pending: Map<string, PendingEntry>;
+
+  beforeEach(() => {
+    ({ server, pending } = makeServer());
+  });
+  afterEach(() => server.stop(true));
+
+  test("resolves with empty body (dismiss)", async () => {
+    const pendingRes = fetch(`http://localhost:${server.port}/pending`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tool_name: "Bash", tool_input: {}, session_id: "sess-dismiss" }),
+    });
+
+    await Bun.sleep(10);
+    const id = pending.keys().next().value!;
+
+    const dismissRes = await fetch(`http://localhost:${server.port}/dismiss/${id}`, {
+      method: "POST",
+    });
+    expect(dismissRes.ok).toBe(true);
+
+    const response = await pendingRes;
+    // Dismiss closes the stream without writing — empty body
+    const text = await response.text();
+    expect(text).toBe("");
+  });
+
+  test("404 on unknown id", async () => {
+    const res = await fetch(`http://localhost:${server.port}/dismiss/no-such`, {
+      method: "POST",
+    });
+    expect(res.status).toBe(404);
+  });
+});
+
+describe("GET /log", () => {
+  let server: ReturnType<typeof Bun.serve>;
+
+  beforeEach(() => {
+    ({ server } = makeServer());
+  });
+  afterEach(() => server.stop(true));
+
+  test("returns empty log initially", async () => {
+    const res = await fetch(`http://localhost:${server.port}/log`);
+    const body = await res.json();
+    expect(body).toEqual([]);
+  });
+
+  test("log grows as items are enqueued", async () => {
+    const pendingRes = fetch(`http://localhost:${server.port}/pending`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tool_name: "Bash", tool_input: { command: "ls" }, session_id: "s1" }),
+    });
+    await Bun.sleep(10);
+
+    const res = await fetch(`http://localhost:${server.port}/log`);
+    const body = (await res.json()) as { tool_name: string }[];
+    expect(body).toHaveLength(1);
+    expect(body[0].tool_name).toBe("Bash");
+
+    // Resolve via queue to clean up
+    const queueRes = await fetch(`http://localhost:${server.port}/queue`);
+    const queue = (await queueRes.json()) as { id: string }[];
+    if (queue.length > 0) {
+      await fetch(`http://localhost:${server.port}/decide/${queue[0].id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision: "allow" }),
+      });
+    }
+    await pendingRes;
+  });
+});
+
+describe("GET /idle/:id/output edge cases", () => {
+  let server: ReturnType<typeof Bun.serve>;
+  let idle: Map<string, IdleSession>;
+
+  beforeEach(() => {
+    ({ server, idle } = makeServer());
+  });
+  afterEach(() => server.stop(true));
+
+  test("404 when session has no transcript path", async () => {
+    idle.set("no-transcript", {
+      sessionId: "no-transcript",
+      idleSince: Date.now(),
+      payload: {},
+    });
+    const res = await fetch(`http://localhost:${server.port}/idle/no-transcript/output`);
+    expect(res.status).toBe(404);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe("No transcript");
+  });
+
+  test("404 when transcript has no assistant messages", async () => {
+    const tmpPath = `/tmp/test-no-assistant-${Date.now()}.jsonl`;
+    const lines = [
+      JSON.stringify({ message: { role: "user", content: [{ type: "text", text: "hello" }] } }),
+    ];
+    await Bun.write(tmpPath, lines.join("\n"));
+
+    idle.set("no-assistant", {
+      sessionId: "no-assistant",
+      idleSince: Date.now(),
+      transcriptPath: tmpPath,
+      payload: {},
+    });
+
+    const res = await fetch(`http://localhost:${server.port}/idle/no-assistant/output`);
+    expect(res.status).toBe(404);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe("No output found");
+  });
+
+  test("skips malformed JSONL lines gracefully", async () => {
+    const tmpPath = `/tmp/test-malformed-${Date.now()}.jsonl`;
+    const lines = [
+      "not valid json",
+      JSON.stringify({ message: { role: "assistant", content: [{ type: "text", text: "good" }] } }),
+      "{broken",
+    ];
+    await Bun.write(tmpPath, lines.join("\n"));
+
+    idle.set("malformed", {
+      sessionId: "malformed",
+      idleSince: Date.now(),
+      transcriptPath: tmpPath,
+      payload: {},
+    });
+
+    const res = await fetch(`http://localhost:${server.port}/idle/malformed/output`);
+    expect(res.ok).toBe(true);
+    const body = (await res.json()) as { output: string };
+    expect(body.output).toBe("good");
+  });
+
+  test("concatenates multiple text blocks in a single message", async () => {
+    const tmpPath = `/tmp/test-multiblock-${Date.now()}.jsonl`;
+    const lines = [
+      JSON.stringify({
+        message: {
+          role: "assistant",
+          content: [
+            { type: "text", text: "part1 " },
+            { type: "tool_use", id: "t1" },
+            { type: "text", text: "part2" },
+          ],
+        },
+      }),
+    ];
+    await Bun.write(tmpPath, lines.join("\n"));
+
+    idle.set("multiblock", {
+      sessionId: "multiblock",
+      idleSince: Date.now(),
+      transcriptPath: tmpPath,
+      payload: {},
+    });
+
+    const res = await fetch(`http://localhost:${server.port}/idle/multiblock/output`);
+    const body = (await res.json()) as { output: string };
+    expect(body.output).toBe("part1 part2");
+  });
+});
+
+describe("POST /pending auto-clear clears idle session", () => {
+  let server: ReturnType<typeof Bun.serve>;
+  let pending: Map<string, PendingEntry>;
+  let idle: Map<string, IdleSession>;
+
+  beforeEach(() => {
+    ({ server, pending, idle } = makeServer());
+  });
+  afterEach(() => server.stop(true));
+
+  test("removes idle session when new pending arrives for same session", async () => {
+    idle.set("sess-idle-clear", {
+      sessionId: "sess-idle-clear",
+      idleSince: Date.now(),
+      payload: {},
+    });
+    expect(idle.has("sess-idle-clear")).toBe(true);
+
+    const pendingRes = fetch(`http://localhost:${server.port}/pending`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tool_name: "Bash",
+        tool_input: { command: "echo" },
+        session_id: "sess-idle-clear",
+      }),
+    });
+
+    await Bun.sleep(10);
+    expect(idle.has("sess-idle-clear")).toBe(false);
+    expect(pending.size).toBe(1);
+
+    // Cleanup
+    const id = pending.keys().next().value!;
+    await fetch(`http://localhost:${server.port}/decide/${id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ decision: "allow" }),
+    });
+    await pendingRes;
   });
 });

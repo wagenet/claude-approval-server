@@ -212,7 +212,6 @@ async function checkHooksConfigured(): Promise<void> {
   }
 }
 
-
 async function runServe(): Promise<void> {
   await checkHooksConfigured();
   await import("./index.ts");

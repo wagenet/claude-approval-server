@@ -1,8 +1,26 @@
-
 const EPHEMERAL_NAME = "claude-approval";
 const BADGE_CIRCLES = [
-  "", "❶", "❷", "❸", "❹", "❺", "❻", "❼", "❽", "❾", "❿",
-  "⓫", "⓬", "⓭", "⓮", "⓯", "⓰", "⓱", "⓲", "⓳", "⓴",
+  "",
+  "❶",
+  "❷",
+  "❸",
+  "❹",
+  "❺",
+  "❻",
+  "❼",
+  "❽",
+  "❾",
+  "❿",
+  "⓫",
+  "⓬",
+  "⓭",
+  "⓮",
+  "⓯",
+  "⓰",
+  "⓱",
+  "⓲",
+  "⓳",
+  "⓴",
 ];
 
 let enabled = false;
@@ -44,7 +62,11 @@ export async function initSwiftBar(serverPort: number): Promise<void> {
 }
 
 // Called when the frontend reports a visibilitychange event.
-export function recordWindowVisibility(visible: boolean, pendingCount: number, origin?: string): void {
+export function recordWindowVisibility(
+  visible: boolean,
+  pendingCount: number,
+  origin?: string,
+): void {
   latestCount = pendingCount;
   windowVisible = visible;
   if (origin) lastKnownOrigin = origin;
@@ -58,7 +80,7 @@ export function recordWindowVisibility(visible: boolean, pendingCount: number, o
 export function notifySwiftBar(pendingCount: number): void {
   latestCount = pendingCount;
   if (!enabled) return;
-if (windowVisible) return;
+  if (windowVisible) return;
   setEphemeral(buildContent(pendingCount));
 }
 
