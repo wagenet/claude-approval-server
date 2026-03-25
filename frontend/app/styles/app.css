@@ -676,6 +676,7 @@ button:active {
   background: var(--card-bg);
   color: var(--text-timer);
   border: 1px solid var(--border);
+  align-self: flex-start;
 }
 
 .idle-time {
