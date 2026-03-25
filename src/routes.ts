@@ -76,7 +76,7 @@ export function createRoutes(
         const body = (await req.json()) as { decision: string; message?: string };
         logRemoval(id, `web-ui:${body.decision}`, entry);
         pending.delete(id);
-        notifySwiftBar(pending.size);
+        notifySwiftBar(pending.size + idleSessions.size);
         entry.resolve(body.decision === "allow" ? "allow" : (body.message ?? body.decision));
         return Response.json({ ok: true });
       },
@@ -91,7 +91,7 @@ export function createRoutes(
         }
         logRemoval(id, "web-ui:dismiss", entry);
         pending.delete(id);
-        notifySwiftBar(pending.size);
+        notifySwiftBar(pending.size + idleSessions.size);
         entry.resolve("dismiss");
         return Response.json({ ok: true });
       },
@@ -122,7 +122,7 @@ export function createRoutes(
           ) {
             logRemoval(id, "post-tool-use", entry);
             pending.delete(id);
-            notifySwiftBar(pending.size);
+            notifySwiftBar(pending.size + idleSessions.size);
             entry.resolve("allow");
             break;
           }
@@ -179,7 +179,7 @@ export function createRoutes(
       async POST(req: Request) {
         // SAFETY: body is { visible: boolean } from the frontend visibilitychange listener
         const body = (await req.json()) as { visible: boolean; origin?: string };
-        recordWindowVisibility(body.visible, pending.size, body.origin);
+        recordWindowVisibility(body.visible, pending.size + idleSessions.size, body.origin);
         return Response.json({ ok: true });
       },
     },
@@ -198,6 +198,7 @@ export function createRoutes(
           payload,
         };
         idleSessions.set(sessionId, idleEntry);
+        notifySwiftBar(pending.size + idleSessions.size);
         if (transcriptPath) {
           void readSessionName(transcriptPath).then((name) => {
             if (name) {
@@ -217,7 +218,7 @@ export function createRoutes(
             removedAny = true;
           }
         }
-        if (removedAny) notifySwiftBar(pending.size);
+        if (removedAny) notifySwiftBar(pending.size + idleSessions.size);
         return Response.json({ ok: true });
       },
     },
@@ -241,6 +242,7 @@ export function createRoutes(
     "/idle/:id": {
       DELETE(req: Request & { params: { id: string } }) {
         const deleted = idleSessions.delete(req.params.id);
+        if (deleted) notifySwiftBar(pending.size + idleSessions.size);
         return deleted
           ? Response.json({ ok: true })
           : Response.json({ error: "Not found" }, { status: 404 });
@@ -342,7 +344,7 @@ export function createRoutes(
           enqueuedAt: Date.now(),
         };
         pending.set(id, entry);
-        notifySwiftBar(pending.size);
+        notifySwiftBar(pending.size + idleSessions.size);
         const transcriptPath =
           typeof payload.transcript_path === "string" ? payload.transcript_path : undefined;
         if (transcriptPath) {
@@ -366,7 +368,7 @@ export function createRoutes(
           if (entry) {
             logRemoval(id, "timeout", entry);
             pending.delete(id);
-            notifySwiftBar(pending.size);
+            notifySwiftBar(pending.size + idleSessions.size);
             resolveDecision("dismiss");
           }
         }, TIMEOUT_MS);
@@ -405,7 +407,7 @@ export function createRoutes(
             if (entry) {
               logRemoval(id, "stream-cancel", entry);
               pending.delete(id);
-              notifySwiftBar(pending.size);
+              notifySwiftBar(pending.size + idleSessions.size);
               resolveDecision("deny");
             }
           },
