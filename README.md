@@ -36,6 +36,12 @@ The hook shim captures terminal environment variables (`TERM_PROGRAM`, `ITERM_SE
 
 When a Claude session ends, the `Stop` hook fires. The server records the finished session and shows it in the **Idle Sessions** column of the web UI. Each card displays the final assistant output from the session transcript, a Focus button to return to the terminal, and a Dismiss button to clear the card.
 
+**Mobile (local network):**
+
+The server listens on `0.0.0.0:4759`, so it's reachable from any device on your local network. Open `http://<your-mac-ip>:4759` on your phone or tablet to see the approval queue.
+
+Cards that require terminal focus show a **Review on computer** button on mobile. Tapping it marks the card as snoozed and moves it to a **For Review** section — it stays visible on desktop for action there.
+
 **Settings:**
 
 Click the ⚙ button in the top-right corner to open Settings. You can choose between dark and light themes, toggle browser notifications on/off, and toggle whether approval notifications stay on screen until dismissed. Settings are saved to `~/.claude/claude-approval-server/settings.json` and persist across restarts.
