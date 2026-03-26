@@ -39,20 +39,37 @@ function buildContent(pendingCount: number): string {
   return `${badge(pendingCount)} | sfimage=asterisk href='${url}' webview=true webvieww=440 webviewh=700`;
 }
 
-function callSwiftBar(url: string): void {
-  const proc = Bun.spawn(["open", url], { stdout: "pipe", stderr: "pipe" });
-  proc.exited.then(async (code) => {
-    if (code !== 0) {
-      const err = await new Response(proc.stderr).text();
-      console.error(`[swiftbar] open failed code=${code} err=${err.trim()}`);
+let inFlight = false;
+let pendingContent: string | null = null;
+
+async function drainEphemeral(content: string): Promise<void> {
+  inFlight = true;
+  try {
+    let next: string | null = content;
+    while (next !== null) {
+      const current = next;
+      pendingContent = null;
+      const url = `swiftbar://setephemeralplugin?name=${EPHEMERAL_NAME}&content=${encodeURIComponent(current)}`;
+      const proc = Bun.spawn(["open", "-g", url], { stdout: "pipe", stderr: "pipe" });
+      const code = await proc.exited;
+      if (code !== 0) {
+        const err = await new Response(proc.stderr).text();
+        console.error(`[swiftbar] open failed code=${code} err=${err.trim()}`);
+      }
+      next = pendingContent;
     }
-  });
+  } finally {
+    inFlight = false;
+  }
 }
 
 function setEphemeral(content: string): void {
-  const url = `swiftbar://setephemeralplugin?name=${EPHEMERAL_NAME}&content=${encodeURIComponent(content)}`;
   console.log(`[swiftbar] setEphemeral content=${JSON.stringify(content)}`);
-  callSwiftBar(url);
+  if (inFlight) {
+    pendingContent = content;
+    return;
+  }
+  void drainEphemeral(content);
 }
 
 export async function initSwiftBar(serverPort: number): Promise<void> {
