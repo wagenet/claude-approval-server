@@ -52,7 +52,14 @@ export default class ApprovalQueueService extends Service {
           );
         }
       }
-      this.items = items;
+      const sameIds =
+        this.items.length === items.length &&
+        this.items.every(
+          (item: QueueItem, i: number) => item.id === items[i]?.id
+        );
+      if (!sameIds) {
+        this.items = items;
+      }
     }
 
     if (sessionsRes.status === 'fulfilled') {
@@ -63,7 +70,14 @@ export default class ApprovalQueueService extends Service {
           this.#notify('Claude session idle', shortCwd(session.cwd ?? ''));
         }
       }
-      this.idleSessions = sessions;
+      const sameSessionIds =
+        this.idleSessions.length === sessions.length &&
+        this.idleSessions.every(
+          (s: IdleSession, i: number) => s.sessionId === sessions[i]?.sessionId
+        );
+      if (!sameSessionIds) {
+        this.idleSessions = sessions;
+      }
     }
   }
 
