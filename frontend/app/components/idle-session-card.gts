@@ -90,6 +90,7 @@ export default class IdleSessionCard extends Component<Sig> {
 
   focus = () => {
     void fetch(`/focus-idle/${this.session.sessionId}`, { method: 'POST' });
+    void this.approvalQueue.dismissIdle(this.session.sessionId);
   };
 
   <template>
