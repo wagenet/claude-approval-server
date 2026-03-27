@@ -57,15 +57,20 @@ setInterval(() => {
   }
 }, 60_000);
 
-function shutdown(signal: string) {
+async function shutdown(signal: string) {
   console.log(`[shutdown] ${signal}: resolving ${pendingRequests.size} pending entries`);
   for (const [id, entry] of pendingRequests) {
     logRemoval(id, "shutdown", entry);
     pendingRequests.delete(id);
     entry.resolve("deny");
   }
-  cleanupSwiftBar();
+  await cleanupSwiftBar();
   process.exit(0);
 }
-process.on("SIGTERM", () => shutdown("SIGTERM"));
-process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => void shutdown("SIGTERM"));
+process.on("SIGINT", () => void shutdown("SIGINT"));
+
+// On hot reload, clean up the SwiftBar plugin before the new module registers a fresh one.
+import.meta.hot?.dispose(async () => {
+  await cleanupSwiftBar();
+});

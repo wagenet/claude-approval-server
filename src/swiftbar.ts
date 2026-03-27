@@ -41,6 +41,7 @@ function buildContent(pendingCount: number): string {
 
 let inFlight = false;
 let pendingContent: string | null = null;
+let drainPromise: Promise<void> | null = null;
 
 async function drainEphemeral(content: string): Promise<void> {
   inFlight = true;
@@ -69,7 +70,7 @@ function setEphemeral(content: string): void {
     pendingContent = content;
     return;
   }
-  void drainEphemeral(content);
+  drainPromise = drainEphemeral(content);
 }
 
 export async function initSwiftBar(serverPort: number): Promise<void> {
@@ -109,7 +110,14 @@ export function notifySwiftBar(pendingCount: number): void {
   setEphemeral(buildContent(pendingCount));
 }
 
-export function cleanupSwiftBar(): void {
+export async function cleanupSwiftBar(): Promise<void> {
   if (!enabled) return;
-  setEphemeral("");
+  enabled = false;
+  if (inFlight) {
+    // Override any queued update so the drain ends by clearing the plugin.
+    pendingContent = "";
+    await drainPromise;
+  } else {
+    await drainEphemeral("");
+  }
 }
