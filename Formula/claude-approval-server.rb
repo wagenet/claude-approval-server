@@ -1,15 +1,15 @@
 class ClaudeApprovalServer < Formula
   desc "Approval server for Claude Code hooks"
   homepage "https://github.com/wagenet/claude-approval-server"
-  version "0.1.0"
+  version "1.2.0"
 
   on_arm do
-    url "https://github.com/wagenet/claude-approval-server/releases/download/v0.1.0/claude-approval-server-macos-arm64"
+    url "https://github.com/wagenet/claude-approval-server/releases/download/v1.2.0/claude-approval-server-macos-arm64"
     sha256 "placeholder_arm64_sha256"
   end
 
   on_intel do
-    url "https://github.com/wagenet/claude-approval-server/releases/download/v0.1.0/claude-approval-server-macos-x86_64"
+    url "https://github.com/wagenet/claude-approval-server/releases/download/v1.2.0/claude-approval-server-macos-x86_64"
     sha256 "placeholder_x86_64_sha256"
   end
 
