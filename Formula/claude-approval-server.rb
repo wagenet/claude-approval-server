@@ -5,12 +5,12 @@ class ClaudeApprovalServer < Formula
 
   on_arm do
     url "https://github.com/wagenet/claude-approval-server/releases/download/v1.2.0/claude-approval-server-macos-arm64"
-    sha256 "302ce5443f5b3b3a69de717404d3eb265eb9dcfa50aff6983ce71eb61ffaaab2"
+    sha256 "7e82b3440b106a7fbfae442c4937e4ff00dfa65f911655dec397c2f8fbe99119"
   end
 
   on_intel do
     url "https://github.com/wagenet/claude-approval-server/releases/download/v1.2.0/claude-approval-server-macos-x86_64"
-    sha256 "4f30f862b0cf2104dfceac865762de54614ea1f2f769e28e12ea39f596978610"
+    sha256 "caf1ae74fceffa837e422d5e363d409b96c3bb3d3cb4ff3e7cfbe990bcafc3ee"
   end
 
   def install

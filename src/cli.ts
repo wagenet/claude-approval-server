@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 import { homedir } from "node:os";
 import { join } from "node:path";
+import shimAsset from "../hook-shim.sh" with { type: "file" };
 
 const PORT = Number(process.env.PORT ?? 4759);
 const SHIM_DIR = join(homedir(), ".claude", "claude-approval-server");
@@ -152,7 +153,7 @@ async function removeClaudeHooks(settingsPath = CLAUDE_SETTINGS): Promise<void> 
 // ---------------------------------------------------------------------------
 
 async function runInstallHooks(): Promise<void> {
-  const shimFile = Bun.file(new URL("../hook-shim.sh", import.meta.url));
+  const shimFile = Bun.file(shimAsset);
 
   await Bun.$`mkdir -p ${SHIM_DIR}`;
   await Bun.write(SHIM_DEST, await shimFile.text());
