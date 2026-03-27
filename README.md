@@ -102,16 +102,12 @@ Re-run `install-hooks` if you clear `~/.claude/settings.json` or after upgrading
 
 ## Run (dev)
 
-```sh
-bun run dev
-```
-
-Starts the Bun API server on `:4759` and the Vite dev server on `:4200` (proxies API calls to Bun). Open http://localhost:4200 for hot-module reload during development.
+See [CONTRIBUTING.md](CONTRIBUTING.md#dev-setup) for dev setup and port configuration.
 
 To run the API server alone (e.g. when testing a production build):
 
 ```sh
-bun --hot index.ts
+bun --hot src/index.ts
 ```
 
 UI: http://localhost:4759

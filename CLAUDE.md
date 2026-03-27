@@ -32,8 +32,9 @@ This is a Claude Code approval server. It intercepts Claude's `PermissionRequest
 - Dev (both servers): `bun run dev` — starts Bun API on `:4759` and Vite on `:4200` (proxy to Bun) via concurrently
 - Dev (API only): `bun --hot src/index.ts`
 - Dev (frontend only): `pnpm --dir frontend start`
+- Custom ports: `PORT=5000 UI_PORT=5100 bun run dev` (avoids collisions with other Ember apps)
 - Production: managed via `brew services`; stdout → `/tmp/claude-approval.log`, stderr → `/tmp/claude-approval.error.log`
-- `SWIFTBAR_URL` env var — overrides the URL used in the SwiftBar webview (dev script sets it to `http://127.0.0.1:4200`)
+- `SWIFTBAR_URL` env var — overrides the URL used in the SwiftBar webview (dev script sets it to `http://127.0.0.1:${UI_PORT:-4200}`)
 
 **Releases:**
 

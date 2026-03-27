@@ -6,16 +6,30 @@
 bun install                      # install root deps (Bun)
 pnpm --dir frontend install      # install frontend deps
 
-bun run dev                      # API (:4759) + Vite (:5173) together
+bun run dev                      # API (:4759) + Vite UI (:4200) together
 bun test                         # server-side tests
 bun run lint && bun run format   # lint + format check
+```
+
+### Port configuration
+
+Both ports are configurable via environment variables to avoid collisions with other local servers:
+
+| Variable  | Default | Controls        |
+| --------- | ------- | --------------- |
+| `PORT`    | `4759`  | Bun API server  |
+| `UI_PORT` | `4200`  | Vite dev server |
+
+```sh
+PORT=5000 UI_PORT=5100 bun run dev
 ```
 
 The `frontend/` package uses pnpm. To work on the frontend alone:
 
 ```sh
-pnpm --dir frontend start   # Vite dev server (proxies API to :4759)
-pnpm --dir frontend build   # production build → frontend/dist/
+pnpm --dir frontend start                    # Vite dev server (proxies API to :4759)
+PORT=5000 UI_PORT=5100 pnpm --dir frontend start  # custom ports
+pnpm --dir frontend build                    # production build → frontend/dist/
 ```
 
 ## Conventional commits
