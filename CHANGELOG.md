@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.3.0](https://github.com/wagenet/claude-approval-server/compare/v1.2.0...v1.3.0) (2026-03-27)
+
+
+### Features
+
+* **ui:** color-code session labels by session ID ([1c61c2e](https://github.com/wagenet/claude-approval-server/commit/1c61c2eb02851241d86ea7a303e4f81ecfe70b73))
+* **ui:** session color coding ([5c19417](https://github.com/wagenet/claude-approval-server/commit/5c19417fa243eb4a5416f3cd982f043bed4bbcbe))
+
+
+### Bug Fixes
+
+* embed hook-shim.sh in compiled binary using import with type file ([c1aec28](https://github.com/wagenet/claude-approval-server/commit/c1aec2840a3cd2087bd9d541dbedc20dd907a06d))
+* **formula:** remove post_install/uninstall hooks; add manual setup caveats ([45e1e4e](https://github.com/wagenet/claude-approval-server/commit/45e1e4eeaa9a74d03092e05da41f7af7b7240d4e))
+* set real sha256 values in homebrew formula and fix update-formula regex ([c9ad4a7](https://github.com/wagenet/claude-approval-server/commit/c9ad4a72af5dd36dd55357caee4096de2190ba02))
+* **swiftbar:** prevent duplicate ephemeral plugins on hot reload and unclean shutdown ([ed82dd3](https://github.com/wagenet/claude-approval-server/commit/ed82dd303b58ab09e68ab2c51a85092bb49dc074))
+
 ## [1.2.0](https://github.com/wagenet/claude-approval-server/compare/v1.1.0...v1.2.0) (2026-03-26)
 
 
