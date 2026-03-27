@@ -27,7 +27,7 @@ content.gsub!(
 # Update sha256 values — arm64 comes first in the file
 shas = [sha_arm, sha_x64]
 i = 0
-content.gsub!(/sha256 "[a-f0-9]+"/) do
+content.gsub!(/sha256 "[^"]+"/) do
   result = %(sha256 "#{shas[i]}")
   i += 1
   result
