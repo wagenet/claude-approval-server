@@ -60,7 +60,13 @@ brew install claude-approval-server
 brew services start claude-approval-server
 ```
 
-Homebrew automatically configures Claude Code hooks during install. Restart Claude Code for hook changes to take effect.
+After installing, configure Claude Code hooks:
+
+```sh
+claude-approval-server install-hooks
+```
+
+Restart Claude Code for hook changes to take effect.
 
 The binary is self-contained — no bun or other runtime required.
 
@@ -81,13 +87,13 @@ SwiftBar integration is automatic — if SwiftBar is installed (v2.0.0+), the se
 
 ```
 claude-approval-server serve             Start the server (used by brew services)
-claude-approval-server install-hooks     Configure Claude Code hooks in ~/.claude/settings.json (recovery)
+claude-approval-server install-hooks     Configure Claude Code hooks in ~/.claude/settings.json
 claude-approval-server uninstall         Remove Claude Code hooks
 claude-approval-server status            Show server status
 claude-approval-server logs              Tail server logs
 ```
 
-`install-hooks` is a recovery command — e.g., if you clear `~/.claude/settings.json`. Homebrew runs it automatically on install and upgrade.
+Re-run `install-hooks` if you clear `~/.claude/settings.json` or after upgrading.
 
 ## Logs
 
@@ -113,7 +119,7 @@ Health: http://localhost:4759/health
 
 ## Hook configuration (reference)
 
-Homebrew configures these hooks automatically via `post_install`. For reference, the entries added to `~/.claude/settings.json` are:
+`claude-approval-server install-hooks` adds the following entries to `~/.claude/settings.json`:
 
 ```json
 "hooks": {
