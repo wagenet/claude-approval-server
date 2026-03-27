@@ -13,15 +13,10 @@ bun run lint && bun run format   # lint + format check
 
 ### Port configuration
 
-Both ports are configurable via environment variables to avoid collisions with other local servers:
-
-| Variable  | Default | Controls        |
-| --------- | ------- | --------------- |
-| `PORT`    | `4759`  | Bun API server  |
-| `UI_PORT` | `4200`  | Vite dev server |
+Set `UI_PORT` to avoid collisions with other local Ember apps that also default to `:4200`:
 
 ```sh
-PORT=5000 UI_PORT=5100 bun run dev
+UI_PORT=5100 bun run dev
 ```
 
 To run the API server alone (e.g. when testing a production build):
@@ -37,7 +32,7 @@ The `frontend/` package uses pnpm. To work on the frontend alone:
 
 ```sh
 pnpm --dir frontend start                    # Vite dev server (proxies API to :4759)
-PORT=5000 UI_PORT=5100 pnpm --dir frontend start  # custom ports
+UI_PORT=5100 pnpm --dir frontend start       # custom port
 pnpm --dir frontend build                    # production build → frontend/dist/
 ```
 
