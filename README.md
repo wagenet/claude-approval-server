@@ -75,7 +75,7 @@ brew services restart claude-approval-server
 
 [SwiftBar](https://swiftbar.app) is a macOS menu bar app that runs scripts on a schedule. The integration shows a badge with the number of pending approvals in your menu bar and opens the web UI in a webview when clicked.
 
-SwiftBar integration is automatic — if SwiftBar is installed, the server registers an ephemeral menu bar plugin on startup. No manual install step required. The plugin clears itself when the server shuts down.
+SwiftBar integration is automatic — if SwiftBar is installed (v2.0.0+), the server registers an ephemeral menu bar plugin on startup. No manual install step required. The plugin clears itself when the server shuts down.
 
 ## Commands
 
