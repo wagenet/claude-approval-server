@@ -24,6 +24,15 @@ Both ports are configurable via environment variables to avoid collisions with o
 PORT=5000 UI_PORT=5100 bun run dev
 ```
 
+To run the API server alone (e.g. when testing a production build):
+
+```sh
+bun --hot src/index.ts
+```
+
+- UI: http://localhost:4759
+- Health: http://localhost:4759/health
+
 The `frontend/` package uses pnpm. To work on the frontend alone:
 
 ```sh

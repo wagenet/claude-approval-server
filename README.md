@@ -104,15 +104,6 @@ Re-run `install-hooks` if you clear `~/.claude/settings.json` or after upgrading
 
 See [CONTRIBUTING.md](CONTRIBUTING.md#dev-setup) for dev setup and port configuration.
 
-To run the API server alone (e.g. when testing a production build):
-
-```sh
-bun --hot src/index.ts
-```
-
-UI: http://localhost:4759
-Health: http://localhost:4759/health
-
 ## Hook configuration (reference)
 
 `claude-approval-server install-hooks` adds the following entries to `~/.claude/settings.json`:
