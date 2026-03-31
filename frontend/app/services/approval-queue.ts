@@ -2,10 +2,12 @@ import Service, { service } from '@ember/service';
 import { tracked } from '@glimmer/tracking';
 import type { QueueItem, IdleSession } from '../utils/ui-types';
 import type AppSettingsService from './app-settings';
+import type FaviconService from './favicon';
 import { shortCwd, SESSION_COLORS } from '../utils/ui-utils';
 
 export default class ApprovalQueueService extends Service {
   @service declare appSettings: AppSettingsService;
+  @service declare favicon: FaviconService;
 
   @tracked items: QueueItem[] = [];
   @tracked idleSessions: IdleSession[] = [];
@@ -108,6 +110,8 @@ export default class ApprovalQueueService extends Service {
         this.idleSessions = sessions;
       }
     }
+
+    this.favicon.update();
   }
 
   #notify(title: string, body: string, opts: NotificationOptions = {}) {

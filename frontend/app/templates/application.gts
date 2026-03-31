@@ -17,8 +17,8 @@ export default class ApplicationTemplate extends Component {
 
   constructor(owner: Owner, args: object) {
     super(owner, args);
-    void this.approvalQueue.start();
     this.favicon.start();
+    void this.approvalQueue.start();
     const reportVisibility = () => {
       void fetch('/window-activity', {
         method: 'POST',
