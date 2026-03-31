@@ -113,6 +113,12 @@ export default class SettingsModal extends Component {
             </label>
           </div>
           <div id="settings-footer">
+            <a
+              class="settings-repo-link"
+              href="https://github.com/wagenet/claude-approval-server"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Contribute on GitHub</a>
             <button
               type="button"
               class="btn-deny"

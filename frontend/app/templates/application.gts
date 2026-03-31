@@ -8,14 +8,17 @@ import PlanModal from '../components/plan-modal';
 import SettingsModal from '../components/settings-modal';
 import type ApprovalQueueService from '../services/approval-queue';
 import type AppSettingsService from '../services/app-settings';
+import type FaviconService from '../services/favicon';
 
 export default class ApplicationTemplate extends Component {
   @service declare approvalQueue: ApprovalQueueService;
   @service declare appSettings: AppSettingsService;
+  @service declare favicon: FaviconService;
 
   constructor(owner: Owner, args: object) {
     super(owner, args);
     void this.approvalQueue.start();
+    this.favicon.start();
     const reportVisibility = () => {
       void fetch('/window-activity', {
         method: 'POST',
