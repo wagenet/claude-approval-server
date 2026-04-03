@@ -32,8 +32,13 @@ export default class DiffBlock extends Component<Sig> {
   }
 
   get lines(): DiffLine[] {
-    const oldStr = asString(this.args.item.tool_input?.old_string);
-    const newStr = asString(this.args.item.tool_input?.new_string);
+    const oldStr = asString(
+      this.args.item.tool_input?.old_string ?? this.args.item._old_content
+    );
+    const newStr = asString(
+      this.args.item.tool_input?.new_string ??
+        this.args.item.tool_input?.content
+    );
     const result: DiffLine[] = [];
     for (const part of Diff.diffLines(oldStr, newStr)) {
       const lines = part.value.split('\n');

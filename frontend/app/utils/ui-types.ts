@@ -25,6 +25,7 @@ export interface QueueItem {
   terminal_info?: TerminalInfo;
   sessionName?: string;
   snoozedToDesktop?: boolean;
+  _old_content?: string;
 }
 
 export interface AskOption {

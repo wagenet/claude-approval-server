@@ -147,6 +147,9 @@ export default class CodeBlock extends Component<Sig> {
     }
 
     if (item.tool_name === 'Write') {
+      if (typeof item._old_content === 'string') {
+        return { kind: 'diff' };
+      }
       const fp = asString(item.tool_input?.file_path ?? item.tool_input?.path);
       const lang = langFromPath(fp);
       const content = asString(item.tool_input?.content);

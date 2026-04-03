@@ -366,6 +366,23 @@ export function createRoutes(
           }
         }
 
+        // For Write tool: if the target file already exists, read its current content
+        // so the frontend can show a real diff instead of just syntax-highlighted code.
+        if (
+          payload.tool_name === "Write" &&
+          typeof (payload.tool_input as Record<string, unknown> | undefined)?.file_path === "string"
+        ) {
+          const fp = (payload.tool_input as Record<string, string>).file_path;
+          const file = Bun.file(fp);
+          if (await file.exists()) {
+            try {
+              (payload as Record<string, unknown>)._old_content = await file.text();
+            } catch {
+              // If we can't read (permissions, binary, etc.), skip — frontend falls back to all-additions.
+            }
+          }
+        }
+
         const entry: import("./types").PendingEntry = {
           resolve: resolveDecision,
           payload,
