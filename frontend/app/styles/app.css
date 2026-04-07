@@ -1007,8 +1007,20 @@ button:active {
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--border);
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
   gap: 0.625rem;
+}
+
+.settings-repo-link {
+  margin-right: auto;
+  font-size: 0.78rem;
+  color: var(--text-timer);
+  text-decoration: none;
+}
+
+.settings-repo-link:hover {
+  color: var(--text-muted);
+  text-decoration: underline;
 }
 
 /* stylelint-disable selector-class-pattern -- highlight.js uses non-kebab class names */
