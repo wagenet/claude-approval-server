@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.4.0](https://github.com/wagenet/claude-approval-server/compare/v1.3.0...v1.4.0) (2026-04-07)
+
+
+### Features
+
+* add favicon with dynamic state indicator and GitHub link in settings ([18e879c](https://github.com/wagenet/claude-approval-server/commit/18e879c04b6ae8314311d2d52dea3378eb9c4b15))
+* add favicon with dynamic state indicator and GitHub link in settings ([1361027](https://github.com/wagenet/claude-approval-server/commit/1361027d752ee8d1ba1d3dcb6487f1d6373b04f2))
+* add UI_PORT env var for configurable dev server ports ([4582e4e](https://github.com/wagenet/claude-approval-server/commit/4582e4e76ad71cf6bc2845ef479f7c41351437d5))
+* add UI_PORT env var for configurable dev server ports ([145972c](https://github.com/wagenet/claude-approval-server/commit/145972ce05cc223cd604a4ee47c0cf2454844e79))
+* show real diff for Write tool on existing files ([6738410](https://github.com/wagenet/claude-approval-server/commit/6738410d7986425ed64a7b5c10216e8f9e3f68f2))
+
+
+### Bug Fixes
+
+* scope to UI_PORT only, remove PORT from public docs ([35aca91](https://github.com/wagenet/claude-approval-server/commit/35aca915406ba5edf6212232e025fa8bab77708e))
+
 ## [1.3.0](https://github.com/wagenet/claude-approval-server/compare/v1.2.0...v1.3.0) (2026-03-27)
 
 
