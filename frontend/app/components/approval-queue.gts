@@ -5,20 +5,19 @@ import QueueCard from './queue-card';
 import AskUserQuestionCard from './ask-user-question-card';
 import type ApprovalQueueService from '../services/approval-queue';
 import AnimatedEach from 'ember-animated/components/animated-each';
-import { fadeIn, fadeOut } from 'ember-animated/motions/opacity';
-import move from 'ember-animated/motions/move';
+import { fadeIn } from 'ember-animated/motions/opacity';
 import type TransitionContext from 'ember-animated/-private/transition-context';
+import scrollAnchor from '../modifiers/scroll-anchor';
 
+// Only fade in new cards. Removed cards leave the DOM immediately (no
+// fadeOut delay) and kept cards stay at their new layout positions (no
+// move transform). This makes each queue change a single atomic layout
+// event — one ResizeObserver firing — so the scroll-anchor modifier can
+// apply one clean immediate correction with no animation to chase.
 function* cardTransition({
   insertedSprites,
-  removedSprites,
-  keptSprites,
   duration,
 }: TransitionContext): Generator {
-  yield Promise.all([
-    ...removedSprites.map((s) => fadeOut(s, { duration })),
-    ...keptSprites.map((s) => move(s)),
-  ]);
   for (const sprite of insertedSprites) {
     void fadeIn(sprite, { duration });
   }
@@ -49,7 +48,7 @@ export default class ApprovalQueue extends Component {
     <div class="column">
       <h1><span class="dot"></span>Approval Queue</h1>
       {{#if this.hasNormalItems}}
-        <div id="queue">
+        <div id="queue" {{scrollAnchor}}>
           {{#AnimatedEach
             this.normalItems key="id" use=this.cardTransition duration=200
             as |item|
