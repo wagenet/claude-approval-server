@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.5.0](https://github.com/wagenet/claude-approval-server/compare/v1.4.0...v1.5.0) (2026-04-09)
+
+
+### Features
+
+* add Dismiss all button for idle sessions ([e2e7903](https://github.com/wagenet/claude-approval-server/commit/e2e790393cadae757767d9336ab172366641e65c))
+* preserve scroll position as queue cards are added/removed ([2cdf092](https://github.com/wagenet/claude-approval-server/commit/2cdf092304bdde154942c6ff8d386b1e2f7e1d9d))
+
+
+### Bug Fixes
+
+* add yield to cardTransition generator in approval-queue ([66c08c4](https://github.com/wagenet/claude-approval-server/commit/66c08c467bf5be6ad1ff33f74591f827c296b8b5))
+
 ## [1.4.0](https://github.com/wagenet/claude-approval-server/compare/v1.3.0...v1.4.0) (2026-04-07)
 
 
