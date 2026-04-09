@@ -18,9 +18,7 @@ function* cardTransition({
   insertedSprites,
   duration,
 }: TransitionContext): Generator {
-  for (const sprite of insertedSprites) {
-    void fadeIn(sprite, { duration });
-  }
+  yield Promise.all(insertedSprites.map((s) => fadeIn(s, { duration })));
 }
 
 export default class ApprovalQueue extends Component {
