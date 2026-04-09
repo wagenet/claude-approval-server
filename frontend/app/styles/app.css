@@ -781,6 +781,23 @@ button:active {
   border-color: var(--text-dim);
 }
 
+.btn-dismiss-all {
+  margin-left: auto;
+  background: transparent;
+  color: var(--text-timer);
+  border: 1px solid var(--border);
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  padding: 0.1rem 0.45rem;
+}
+
+.btn-dismiss-all:hover {
+  color: var(--text-muted);
+  border-color: var(--text-dim);
+}
+
 #for-review-idle {
   margin-top: 2rem;
 }

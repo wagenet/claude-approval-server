@@ -159,6 +159,11 @@ export default class ApprovalQueueService extends Service {
     );
   }
 
+  async dismissAllIdle() {
+    await fetch('/idle', { method: 'DELETE' });
+    this.idleSessions = [];
+  }
+
   async snoozeIdle(sessionId: string) {
     await fetch(`/snooze-idle/${sessionId}`, { method: 'POST' });
     this.idleSessions = this.idleSessions.map((s) =>

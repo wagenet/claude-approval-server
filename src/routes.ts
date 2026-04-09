@@ -253,6 +253,11 @@ export function createRoutes(
         );
         return Response.json(items);
       },
+      DELETE() {
+        idleSessions.clear();
+        notifySwiftBar(pending.size + idleSessions.size);
+        return Response.json({ ok: true });
+      },
     },
 
     "/snooze-idle/:id": {

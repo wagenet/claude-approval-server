@@ -1,5 +1,6 @@
 import Component from '@glimmer/component';
 import { service } from '@ember/service';
+import { on } from '@ember/modifier';
 import IdleSessionCard from './idle-session-card';
 import type ApprovalQueueService from '../services/approval-queue';
 import AnimatedEach from 'ember-animated/components/animated-each';
@@ -27,6 +28,10 @@ export default class IdleSessions extends Component {
 
   cardTransition = cardTransition;
 
+  dismissAll = () => {
+    void this.approvalQueue.dismissAllIdle();
+  };
+
   get normalSessions() {
     return this.approvalQueue.idleSessions.filter((s) => !s.snoozedToDesktop);
   }
@@ -45,7 +50,16 @@ export default class IdleSessions extends Component {
 
   <template>
     <div class="column">
-      <h1><span class="dot dot-idle"></span>Idle Sessions</h1>
+      <h1>
+        <span class="dot dot-idle"></span>Idle Sessions
+        {{#if this.hasNormalSessions}}
+          <button
+            type="button"
+            class="btn-dismiss-all"
+            {{on "click" this.dismissAll}}
+          >Dismiss all</button>
+        {{/if}}
+      </h1>
       {{#if this.hasNormalSessions}}
         <div id="idle-list">
           {{#AnimatedEach
