@@ -28,6 +28,14 @@ export interface QueueItem {
   _old_content?: string;
 }
 
+export interface RunLogEntry {
+  timestamp: number;
+  session_id: string;
+  tool_name: string;
+  tool_input: unknown;
+  source: 'approved' | 'auto';
+}
+
 export interface AskOption {
   label: string;
   description?: string;
