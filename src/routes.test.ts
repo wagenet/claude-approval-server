@@ -607,30 +607,58 @@ describe("GET /log", () => {
     expect(body).toEqual([]);
   });
 
-  test("log grows as items are enqueued", async () => {
-    const pendingRes = fetch(`http://localhost:${server.port}/pending`, {
+  test("log grows when PostToolUse fires (auto source)", async () => {
+    await fetch(`http://localhost:${server.port}/post-tool-use`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ tool_name: "Bash", tool_input: { command: "ls" }, session_id: "s1" }),
     });
-    await Bun.sleep(10);
 
     const res = await fetch(`http://localhost:${server.port}/log`);
-    const body = (await res.json()) as { tool_name: string }[];
+    const body = (await res.json()) as { tool_name: string; source: string; session_id: string }[];
     expect(body).toHaveLength(1);
     expect(body[0].tool_name).toBe("Bash");
+    expect(body[0].source).toBe("auto");
+    expect(body[0].session_id).toBe("s1");
+  });
 
-    // Resolve via queue to clean up
-    const queueRes = await fetch(`http://localhost:${server.port}/queue`);
-    const queue = (await queueRes.json()) as { id: string }[];
-    if (queue.length > 0) {
-      await fetch(`http://localhost:${server.port}/decide/${queue[0].id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decision: "allow" }),
-      });
-    }
+  test("source is 'approved' when PostToolUse clears a pending entry", async () => {
+    const pendingRes = fetch(`http://localhost:${server.port}/pending`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tool_name: "Bash", tool_input: { command: "echo hi" }, session_id: "s2" }),
+    });
+    await Bun.sleep(10);
+
+    await fetch(`http://localhost:${server.port}/post-tool-use`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tool_name: "Bash", tool_input: { command: "echo hi" }, session_id: "s2" }),
+    });
     await pendingRes;
+
+    const res = await fetch(`http://localhost:${server.port}/log`);
+    const body = (await res.json()) as { source: string; session_id: string }[];
+    expect(body).toHaveLength(1);
+    expect(body[0].source).toBe("approved");
+  });
+
+  test("session_id filter returns only matching entries", async () => {
+    await fetch(`http://localhost:${server.port}/post-tool-use`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tool_name: "Bash", tool_input: { command: "ls" }, session_id: "sessA" }),
+    });
+    await fetch(`http://localhost:${server.port}/post-tool-use`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tool_name: "Write", tool_input: { path: "/tmp/x" }, session_id: "sessB" }),
+    });
+
+    const res = await fetch(`http://localhost:${server.port}/log?session_id=sessA`);
+    const body = (await res.json()) as { session_id: string }[];
+    expect(body).toHaveLength(1);
+    expect(body[0].session_id).toBe("sessA");
   });
 });
 

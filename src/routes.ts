@@ -128,6 +128,7 @@ export function createRoutes(
         const sessionId = asString(payload.session_id);
         const toolName = asString(payload.tool_name);
 
+        let matched = false;
         const toolInput = stableStringify(payload.tool_input);
         for (const [id, entry] of pending) {
           if (
@@ -135,6 +136,7 @@ export function createRoutes(
             entry.payload.tool_name === toolName &&
             stableStringify(entry.payload.tool_input) === toolInput
           ) {
+            matched = true;
             logRemoval(id, "post-tool-use", entry);
             pending.delete(id);
             notifySwiftBar(pending.size + idleSessions.size);
@@ -142,6 +144,15 @@ export function createRoutes(
             break;
           }
         }
+
+        log.push({
+          timestamp: Date.now(),
+          session_id: sessionId,
+          tool_name: toolName,
+          tool_input: payload.tool_input,
+          source: matched ? "approved" : "auto",
+        });
+        if (log.length > LOG_MAX) log.splice(0, log.length - LOG_MAX);
 
         return Response.json({ ok: true });
       },
@@ -333,8 +344,9 @@ export function createRoutes(
     },
 
     "/log": {
-      GET() {
-        return Response.json(log);
+      GET(req: Request) {
+        const sid = new URL(req.url).searchParams.get("session_id");
+        return Response.json(sid ? log.filter((e) => e.session_id === sid) : log);
       },
     },
 
@@ -403,13 +415,6 @@ export function createRoutes(
           });
         }
         const toolName = asString(payload.tool_name, "unknown");
-        log.push({
-          id,
-          timestamp: Date.now(),
-          tool_name: toolName,
-          tool_input: payload.tool_input,
-        });
-        if (log.length > LOG_MAX) log.splice(0, log.length - LOG_MAX);
         const summary = JSON.stringify(payload.tool_input ?? "");
         console.log(`[enqueue] ${toolName} | ${summary.slice(0, 120)} | id=${id}`);
 

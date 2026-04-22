@@ -12,7 +12,7 @@ import type { IdleSession } from '../utils/ui-types';
 import type ApprovalQueueService from '../services/approval-queue';
 
 interface Sig {
-  Args: { session: IdleSession };
+  Args: { session: IdleSession; onOpenHistory: () => void };
 }
 
 export default class IdleSessionCard extends Component<Sig> {
@@ -124,6 +124,9 @@ export default class IdleSessionCard extends Component<Sig> {
       </div>
 
       <div class="actions">
+        <button type="button" class="btn-history" {{on "click" @onOpenHistory}}>
+          History
+        </button>
         <button
           type="button"
           class="btn-dismiss"

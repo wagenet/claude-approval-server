@@ -1,8 +1,12 @@
 import Component from '@glimmer/component';
+import { tracked } from '@glimmer/tracking';
 import { service } from '@ember/service';
+import { fn } from '@ember/helper';
 import { on } from '@ember/modifier';
 import IdleSessionCard from './idle-session-card';
+import SessionHistoryModal from './session-history-modal';
 import type ApprovalQueueService from '../services/approval-queue';
+import type { IdleSession } from '../utils/ui-types';
 import AnimatedEach from 'ember-animated/components/animated-each';
 import { fadeIn, fadeOut } from 'ember-animated/motions/opacity';
 import move from 'ember-animated/motions/move';
@@ -26,10 +30,24 @@ function* cardTransition({
 export default class IdleSessions extends Component {
   @service declare approvalQueue: ApprovalQueueService;
 
+  @tracked historyTarget: { sessionId: string; sessionName: string } | null =
+    null;
+
   cardTransition = cardTransition;
 
   dismissAll = () => {
     void this.approvalQueue.dismissAllIdle();
+  };
+
+  openHistory = (session: IdleSession) => {
+    this.historyTarget = {
+      sessionId: session.sessionId,
+      sessionName: session.sessionName ?? session.sessionId.slice(0, 8) + '…',
+    };
+  };
+
+  closeHistory = () => {
+    this.historyTarget = null;
   };
 
   get normalSessions() {
@@ -69,7 +87,10 @@ export default class IdleSessions extends Component {
             duration=200
             as |session|
           }}
-            <IdleSessionCard @session={{session}} />
+            <IdleSessionCard
+              @session={{session}}
+              @onOpenHistory={{fn this.openHistory session}}
+            />
           {{/AnimatedEach}}
         </div>
       {{else}}
@@ -87,11 +108,22 @@ export default class IdleSessions extends Component {
               duration=200
               as |session|
             }}
-              <IdleSessionCard @session={{session}} />
+              <IdleSessionCard
+                @session={{session}}
+                @onOpenHistory={{fn this.openHistory session}}
+              />
             {{/AnimatedEach}}
           </div>
         </div>
       {{/if}}
     </div>
+
+    {{#if this.historyTarget}}
+      <SessionHistoryModal
+        @sessionId={{this.historyTarget.sessionId}}
+        @sessionName={{this.historyTarget.sessionName}}
+        @onClose={{this.closeHistory}}
+      />
+    {{/if}}
   </template>
 }

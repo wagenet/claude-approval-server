@@ -388,6 +388,215 @@ h1 .dot {
   margin-left: auto;
 }
 
+/* ── History modal ─────────────────────────────────────── */
+
+.history-modal {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 75%);
+  z-index: 100;
+  padding: 2rem;
+  overflow-y: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.history-modal-inner {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  width: 100%;
+  max-width: 860px;
+  display: flex;
+  flex-direction: column;
+}
+
+.history-modal-header {
+  padding: 1.25rem 1.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.history-modal-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+}
+
+.history-modal-close {
+  margin-left: auto;
+}
+
+.history-modal-body {
+  padding: 1.25rem 1.5rem;
+  font-size: 0.875rem;
+  color: var(--text);
+  max-height: calc(100vh - 10rem);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.history-loading,
+.history-empty {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.history-error {
+  color: #f87171;
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.history-entry {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.history-entry-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Flatten code blocks into the history entry container */
+.history-entry pre {
+  border: none;
+  border-radius: 0;
+  margin: 0;
+  padding: 0;
+  max-height: 280px;
+  background: #0d1117;
+}
+
+.history-entry pre code {
+  padding: 0.75rem 1rem;
+  display: block;
+}
+
+.history-entry pre.diff-block {
+  padding: 0.75rem 1rem;
+}
+
+.history-entry .file-path {
+  padding: 0.5rem 1rem 0;
+  background: #0d1117;
+  margin: 0;
+}
+
+.history-entry .git-commit-block,
+.history-entry .two-part-block {
+  padding: 0.75rem 1rem;
+  background: #0d1117;
+}
+
+.history-entry .git-commit-block pre,
+.history-entry .two-part-block pre {
+  padding: 0.5rem 0;
+  background: transparent;
+}
+
+.history-entry .commit-message {
+  padding: 0.5rem 0 0;
+}
+
+.history-entry-time {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.history-entry-source {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15em 0.5em;
+  border-radius: 3px;
+}
+
+.history-source-auto {
+  background: var(--border);
+  color: var(--text-muted);
+}
+
+.history-source-approved {
+  background: #16a34a33;
+  color: #4ade80;
+}
+
+.btn-history {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.btn-history:hover {
+  border-color: var(--text-muted);
+  color: var(--text);
+}
+
+.btn-hide-reviewed {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  padding: 0.2em 0.6em;
+}
+
+.btn-hide-reviewed:hover {
+  border-color: var(--text-muted);
+  color: var(--text);
+}
+
+.btn-mark-reviewed {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  padding: 0.1em 0.4em;
+  border-radius: 3px;
+  opacity: 0.4;
+}
+
+.btn-mark-reviewed:hover,
+.btn-mark-reviewed.is-reviewed {
+  opacity: 1;
+  border-color: #16a34a88;
+  color: #4ade80;
+}
+
+.history-entry.is-reviewed {
+  opacity: 0.45;
+}
+
+.btn-link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--text-muted);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+}
+
+.btn-link:hover {
+  color: var(--text);
+}
+
 .btn-approve-plan {
   background: #16a34a;
   color: #fff;
